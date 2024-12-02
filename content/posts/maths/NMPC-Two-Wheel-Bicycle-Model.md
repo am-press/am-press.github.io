@@ -14,7 +14,7 @@ collapsible: true
 
 ## Introduction
 
-<p>I recently read a paper entitled "A Nonlinear Model Predictive Control Strategy for Autonomous Racing of Scale Vehicles" by Vittorio Cataffo et al., [1] and decided to implement the proposed method in <a href="https://www.python.org/">Python3</a> using <a href="https://alphaville.github.io/optimization-engine/">OpEn</a>. To study it further, I will be modifying the method to prioritize <em>road safe</em> features over minimum lap time. The purpose of this article is to showcase the formulation and simulation results of an NMPC controlled vehicle system that is <em>road safe</em> (at least in simulations). As a part of experimentation, I will be modifying the approach as the need arises and I will be the updates in future articles accordingly. Going forward, the Telugu letter ttha, <b>ఠ</b>, will be used at the beginning of a section to indicate that a <em>road safety</em> feature is being introduced. Throughout this and the future posts the right-hand coordinate space will be used with the z-axis pointing vertically up, the angles and rotations in counter-clockwise (CCW) direction will be taken as positive.</p>
+<p>I recently read a paper entitled "A Nonlinear Model Predictive Control Strategy for Autonomous Racing of Scale Vehicles" by Vittorio Cataffo et al., [1] and decided to implement the proposed method in <a href="https://www.python.org/">Python3</a> using <a href="https://alphaville.github.io/optimization-engine/">OpEn</a>. To study it further, I will be modifying the method to prioritize <em>road safe</em> features over minimum lap time. The purpose of this article is to showcase the formulation and simulation results of an NMPC controlled vehicle system that is <em>road safe</em> (at least in simulations). As a part of experimentation, I will be modifying the approach as the need arises and I will be the updates in future articles accordingly. Going forward, the Telugu letter ttha, <b>ఠ</b>, will be used at the beginning of a section to indicate that a <em>road safety</em> feature is being introduced. Throughout this and the future posts the right-hand coordinate space will be used with the z-axis pointing vertically up, the angles and rotations in counter-clockwise (CCW) direction will be taken as positive. The code used for this post can be found in the Google Colab notebook <a href="https://colab.research.google.com/drive/1_cvzpip8qXrlxJnBbmFXy6kmFzOCXrbX?usp=sharing">here</a>.</p>
 
 ### Software Used
 1. **[Python3](https://www.python.org/):** An open-source high-level interpreted programming language.
@@ -156,7 +156,6 @@ def dynamics(z, u):
 
     pwm_t = u[0]
     delta_t = u[1]
-    brake = u[2]
 
     alpha_f = -cs.atan2(omega_t*lf + vyt, vxt) + delta_t
     alpha_r = cs.atan2(omega_t*lr - vyt, vxt)
@@ -258,7 +257,7 @@ umin_seq = [0, -np.pi/3] * N  # Minimum value of inputs
 umax_seq = [1, np.pi/3] * N  # Maximum value of inputs
 
 Q1 = np.diagflat([10000, 10000, 0, 0, 0, 0])  # Weight matrix Q1
-Q2 = np.diagflat([1, 5, 1])  # Weight matrix Q2
+Q2 = np.diagflat([1, 5])  # Weight matrix Q2
 
 u_seq = cs.SX.sym("u_seq", N * nu, 1)
 problem_params = cs.SX.sym("problem_params", 2*nz + nu, 1) 
@@ -347,7 +346,7 @@ pos_ref = [5, 5]  # p^d
 z_state_0 = np.array([*current_position, 0, 0, 0, 0]).reshape(nz, 1)  # z
 z_ref = np.array([*pos_ref, 0, 0, 0, 0]).reshape(nz, 1)  # z^d
 
-u_prev = np.array([0, 0, 0]).reshape(nu, 1)  # Previous input at t=-Ts
+u_prev = np.array([0, 0]).reshape(nu, 1)  # Previous input at t=-Ts
 
 # Matrices to record states and inputs during simulation, for plotting
 state_sequence = np.zeros((simulation_steps, nz))  # Matrix to record states
@@ -360,7 +359,8 @@ for k in range(simulation_steps-1):
     # Check if solver failed
     if not solver_response.is_ok():
       out = solver_response.get()
-      print(f"solver failed! with exit status: {out.exit_status}")
+      print(f"solver failed! with exit code: {out.code}")
+      print(f"and message: {out.message}")
       print(f"at time step = {k}")
       break
     out = solver_response.get()  # Get response
@@ -382,7 +382,7 @@ The simulation results are shown in the following GIF.
 </p>
 
 <div>
-<img src="/mpc_car_st_slope_no_brake.gif" alt="Simulation results" width="640" height="400">
+<img src="/mpc_car_st_slope_no_brake2.gif" alt="Simulation results" width="640" height="400">
 </div>
 
 <p>
@@ -426,6 +426,8 @@ The brake constant is define in Python3 as follows:
 nu = 3  # Change number of inputs to 3
 # Definition of brake constant
 brake_constant = 0.1
+umin_seq = [0, -np.pi/3, 0] * N  # Minimum value of inputs
+umax_seq = [1, np.pi/3, 1] * N  # Maximum value of inputs
 ```
 
 <p>
