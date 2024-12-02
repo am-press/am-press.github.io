@@ -112,7 +112,7 @@ $$</p>
 | $C_{m3}$ | $3.99$ N         | $C_{m4}$ | $0.67$ kg m$^{-1}$ | $M$      | $1674$                            |
 
 <p>
-The following code snippet shows the definition of the bicycle dynamics parameters in python.
+The following code snippet shows the definition of constants of the bicycle dynamics in Python3.
 </p>
 
 ```python
@@ -139,7 +139,7 @@ Cm4 = .67
 ```
 
 <p>
-The following code snippet shows the definition of the bicycle dynamics in python.
+The bicycle dynamics are defined in Python3 as follows.
 </p>
 
 ```python
@@ -240,7 +240,7 @@ Take a new measurement of the resulting state $z^\star_ 1$ and move on to iterat
 
 
 <p>
-The following code snippet shows the NMPC formulation in python.
+The following code snippet shows the definition of the NMPC parameters and constants in Python3.
 </p>
 
 ```python
@@ -248,47 +248,61 @@ import numpy as np
 import opengen as og
 import casadi.casadi as cs
 
-nz = 6
-nu = 3
-N = 50
+nz = 6  # Number of states
+nu = 2  # Number of inputs
+N = 50  # Prediction horizon
 
-zmin = [-100, -100, -np.inf, 0, 0, -np.inf]
-zmax = [100, 100, np.inf, 5, 5, np.inf]
-umin_seq = [0, -np.pi/3, 0] * N
-umax_seq = [1, np.pi/3, 1] * N
+vmin = 0  # Minimum value of vx
+vmax = 5  # Maximum value of vx
+umin_seq = [0, -np.pi/3] * N  # Minimum value of inputs
+umax_seq = [1, np.pi/3] * N  # Maximum value of inputs
 
-Q = np.diagflat([10000, 10000, 0, 0, 0, 0])
-R = np.diagflat([1, 5, 1])
+Q1 = np.diagflat([10000, 10000, 0, 0, 0, 0])  # Weight matrix Q1
+Q2 = np.diagflat([1, 5, 1])  # Weight matrix Q2
 
 u_seq = cs.SX.sym("u_seq", N * nu, 1)
 problem_params = cs.SX.sym("problem_params", 2*nz + nu, 1) 
-                         # [z_0, z_ref, u_{-1}]
-z_0 = problem_params[ : nz]
-z_ref = problem_params[nz : 2 * nz]
-u_prev = problem_params[2 * nz : 2 * nz + nu]  # u_{-1} value of inputs before t=0
+                         # [z, z_d, u_{-1}]
+z = problem_params[ : nz]  # Initial state
+z_d = problem_params[nz : 2 * nz]  # Reference (destination) state
+u_prev = problem_params[2 * nz : 2 * nz + nu]  # u_{-1} value of inputs at t=-Ts
 
-def stage_cost(u_current, u_prev):
-    return (u_current.T - u_prev.T) @ R @ (u_current - u_prev) + R2 * u_current[0] * u_current[2]
-
-def terminal_cost(z):
-    return (z.T - z_ref.T) @ Q @ (z - z_ref)
-
-z_t = z_0
+z_t = z  # Start with current state as initial state
 total_cost = 0
 penality_constraint_vx = 0
+```
 
+</p>Then the stage and terminal cost functions are defined as follows.</p>
+
+```python
+# Define the stage cost
+def stage_cost(u_current, u_prev):
+    return (u_current.T - u_prev.T) @ Q2 @ (u_current - u_prev)
+
+# Define the terminal cost
+def terminal_cost(z):
+    return (z.T - z_d.T) @ Q1 @ (z - z_d)
+```
+
+<p>The formulation of on the NMPC in Python3 is shown in the code snippet below.</p>
+
+```python
+# Formulate the NMPC total cost and constraints
 for t in range(N):
-    u_current = u_seq[t * nu : (t + 1) * nu]
-    total_cost += stage_cost(u_current, u_prev)
-    z_t = bm.dynamics_cs(z_t, u_current)
-    u_prev = u_current
-    penality_constraint_vx += cs.fmax(0, cs.norm_1(z_t[3]) - zmax[3])
-    penality_constraint_vx += cs.norm_1(cs.fmin(zmin[3], z_t[3]))
+    u_current = u_seq[t * nu : (t + 1) * nu]  # Set current time step input
+    total_cost += stage_cost(u_current, u_prev)  # Add stage cost to total cost for the current time step
+    z_t = dynamics(z_t, u_current)  # Set current state to resultant state of the current input
+    u_prev = u_current  # Change previous input to current input for next iteration
+    penality_constraint_vx += cs.fmax(0, cs.norm_1(z_t[3]) - vmax)  # Add set vx maximum constraint
+    penality_constraint_vx += cs.norm_1(cs.fmin(vmin, z_t[3]))  # Add set vx minimum constraint
 
+# Add terminal cost to total cost
 total_cost += terminal_cost(z_t)
 
+# Define rectangular constraints for inputs
 U = og.constraints.Rectangle(umin_seq, umax_seq)
 
+# Define and build the problem
 problem = og.builder.Problem(u_seq, problem_params, total_cost)
 problem = problem.with_constraints(U)
 problem = problem.with_penalty_constraints(penality_constraint_vx)
@@ -312,7 +326,59 @@ builder.build()
 
 <p>
 
-This setup is implemented and simulated in Python3 with $N=50,\ S = 300,\ T=0.01 \text{ s},\ z = 0_{n_x \times 1} \text{ and }p^ d = [5, 5]^\mathsf{T}$. The following GIF shows the simulation results.
+This setup is implemented and simulated in Python3 with $N=50,\ S = 300,\ T=0.01 \text{ s},\ z = 0_{n_x \times 1} \text{ and }p^ d = [5, 5]^\mathsf{T}$ and the following code snippet shows the implementation.
+</p>
+
+```python
+import numpy as np
+import opengen as og
+
+# Define the TCP server manager
+mng = og.tcp.OptimizerTcpManager("optimizer/bicycle_model")
+# Start the TCP server
+mng.start()
+
+# Simulation config
+simulation_steps = 300
+
+# Simulations parameters
+current_position = [0, 0]  # p
+pos_ref = [5, 5]  # p^d
+z_state_0 = np.array([*current_position, 0, 0, 0, 0]).reshape(nz, 1)  # z
+z_ref = np.array([*pos_ref, 0, 0, 0, 0]).reshape(nz, 1)  # z^d
+
+u_prev = np.array([0, 0, 0]).reshape(nu, 1)  # Previous input at t=-Ts
+
+# Matrices to record states and inputs during simulation, for plotting
+state_sequence = np.zeros((simulation_steps, nz))  # Matrix to record states
+input_sequence = np.zeros((simulation_steps, nu))  # Matrix to record inouts
+state_sequence[0, :] = np.array(z_state_0.reshape(nz))  # Set initial states
+z_current = z_state_0  # Set current state to initial state
+for k in range(simulation_steps-1):
+    # Set problem parameters
+    solver_response = mng.call(p=[*z_current.flatten(), *z_ref.flatten(),  *u_prev.flatten()])
+    # Check if solver failed
+    if not solver_response.is_ok():
+      out = solver_response.get()
+      print(f"solver failed! with exit status: {out.exit_status}")
+      print(f"at time step = {k}")
+      break
+    out = solver_response.get()  # Get response
+    us = out.solution  # Get the input solution sequence
+    u_mpc = us[0:nu]  # Only use the first computed input
+    # Simulate and get next state using the computed input
+    z_next = np.array(dynamics(z_current, u_mpc)) # Set next state
+    u_prev = np.array(u_mpc)  # Make current input as previous input
+    state_sequence[k+1, :] = z_next.T  # Update the states record
+    input_sequence[k, :] = u_mpc  # Update the inputs record
+    z_current = z_next.flatten()  # Set the current state to next state
+
+# Make sure to kill the serve when the simulation is over
+mng.kill()
+```
+
+<p>
+The following GIF shows the simulation results.
 </p>
 
 <div>
@@ -353,10 +419,11 @@ Leaving $\tilde{d} = 0$, then at $t=0$, $F_x = -C_{m3}$, which makes $v_x < 0$. 
 </p>
 
 <p>
-The following code snippet shows the definition of the bicycle dynamics parameters in python.
+The brake constant is define in Python3 as follows.
 </p>
 
 ```python
+nu = 3  # Change number of inputs to 3
 # Definition of brake constant
 brake_constant = 0.1
 ```
@@ -379,7 +446,7 @@ def dynamics(z, u):
 
     pwm_t = u[0]
     delta_t = u[1]
-    brake = u[2]
+    brake = u[2]  # Addition of brake input
 
     alpha_f = -cs.atan2(omega_t*lf + vyt, vxt) + delta_t
     alpha_r = cs.atan2(omega_t*lr - vyt, vxt)
@@ -393,8 +460,9 @@ def dynamics(z, u):
     yt = yt + Ts*(vxt*cs.sin(psi_t) + vyt*cs.cos(psi_t))
     psi_t = psi_t + Ts*omega_t
 
-    Fx_brake = brake_coeff_of_kinetic_fric * brake
+    Fx_brake = brake_coeff_of_kinetic_fric * brake  # Compute the brake force
 
+    # Subtrack brake force from Fx
     vxt = vxt + Ts*(Frx - Fx_brake - Ffy*cs.sin(delta_t) + (Ffx - Fx_brake)*cs.cos(delta_t) + m*vyt*omega_t)/m 
     vyt = vyt + Ts*(Fry + Ffy*cs.cos(delta_t) + (Ffx - Fx_brake)*cs.sin(delta_t) - m*vxt*omega_t)/m
     omega_t = omega_t + Ts*(lf*Ffy*cs.cos(delta_t) + lf*(Ffx - Fx_brake)*cs.sin(delta_t) - lr*Fry)/Jz
