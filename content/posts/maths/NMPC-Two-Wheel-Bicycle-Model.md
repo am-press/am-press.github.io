@@ -139,7 +139,7 @@ Cm4 = .67
 ```
 
 <p>
-The bicycle dynamics are defined in Python3 as follows.
+The bicycle dynamics are defined in Python3, as follows:
 </p>
 
 ```python
@@ -178,7 +178,7 @@ def dynamics(z, u):
 ```
 
 <p>
-The goal is to formulate an NMPC that minimises the distance between the desired final position $p^d = [p_x^d,\ p_y^d]^\mathsf{T}$ and the position of the vehicle $p_N = [p_x^N,\ p_y^N]^\mathsf{T}$ after $N$ (prediction horizon) time steps. This can also be interpreted as asking the MPC controller to take the system as close as possible to the desired final position with in a given time of $N \cdot T$ seconds. Whilst doing so, the controller shall ensure that the system obeys the state and input (safety) constraints, given as
+The goal is to formulate an NMPC that minimises the distance between the desired final position $p^d = [p_x^d,\ p_y^d]^\mathsf{T}$ and the position of the vehicle $p_N = [p_x^N,\ p_y^N]^\mathsf{T}$ after $N$ (prediction horizon) time steps. This can also be interpreted as asking the MPC controller to take the system as close as possible to the desired final position with in a given time of $N \cdot T$ seconds. Whilst doing so, the controller shall ensure that the system obeys the state and input (safety) constraints, given as:
 </p>
 
 <p>
@@ -272,7 +272,7 @@ total_cost = 0
 penality_constraint_vx = 0
 ```
 
-</p>Then the stage and terminal cost functions are defined as follows.</p>
+</p>Then the stage and terminal cost functions are defined, as follows:</p>
 
 ```python
 # Define the stage cost
@@ -378,7 +378,7 @@ mng.kill()
 ```
 
 <p>
-The following GIF shows the simulation results.
+The simulation results are shown in the following GIF.
 </p>
 
 <div>
@@ -419,7 +419,7 @@ Leaving $\tilde{d} = 0$, then at $t=0$, $F_x = -C_{m3}$, which makes $v_x < 0$. 
 </p>
 
 <p>
-The brake constant is define in Python3 as follows.
+The brake constant is define in Python3 as follows:
 </p>
 
 ```python
