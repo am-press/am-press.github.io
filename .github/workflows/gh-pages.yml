@@ -36,15 +36,10 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
-    env:
-      HUGO_VERSION: "0.125.7"
     steps:
-      - name: Check version
-        if: ${{ github.event.inputs.hugoVersion }}
-        run: export HUGO_VERSION="${{ github.event.inputs.hugoVersion }}"
       - name: Install Hugo CLI
         run: |
-          wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${{HUGO_VERSION}}/hugo_${{HUGO_VERSION}}_linux-amd64.deb \
+          wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.125.7/hugo_0.125.7_linux-amd64.deb \
           && sudo dpkg -i ${{ runner.temp }}/hugo.deb
       - name: Checkout
         uses: actions/checkout@v3
