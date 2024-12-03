@@ -10,7 +10,7 @@ tags: ["Control", "NMPC", "OpEn"]
 collapsible: true
 ---
 
-<p><em>This is a contributed post by NVS Chandra Mouli G.</em></p>
+<p><em>This is a contributed post by <a href="#about-the-author">NVS Chandra Mouli G.</a></em></p>
 
 ## Introduction
 
@@ -487,26 +487,20 @@ As it can be seen from the results, indeed the vehicle reaches close to $z^d = [
 
 ## References
 
-<p>
+<ol>
 
-[1] Cataffo, Vittorio & Silano, Giuseppe & Iannelli, Luigi & Puig, Vicenç & Glielmo, Luigi. (2022). A Nonlinear Model Predictive Control Strategy for Autonomous Racing of Scale Vehicles. 10.1109/SMC53654.2022.9945279. 
-</p>
+<li>Cataffo, Vittorio & Silano, Giuseppe & Iannelli, Luigi & Puig, Vicenç & Glielmo, Luigi. (2022). A Nonlinear Model Predictive Control Strategy for Autonomous Racing of Scale Vehicles. 10.1109/SMC53654.2022.9945279.</li>
+<li>Liniger, A., Domahidi, A., & Morari, M. (2017). Optimization-Based Autonomous Racing of 1:43 Scale RC Cars. Available at <a href="https://doi.org/10.1002/oca.2123">https://doi.org/10.1002/oca.2123</a>.</li>
+</ol>
 
-<p>
 
-[2] Liniger, A., Domahidi, A., & Morari, M. (2017). Optimization-Based Autonomous Racing of 1:43 Scale RC Cars. ArXiv. https://doi.org/10.1002/oca.2123
-</p>
 
-# Acknowledgements:
+<p><b>Acknowledgements:</b> I would like to thank and acknowledge Dr. Pantelis Sopasakis for his valuable suggestions and insights during the proof reading of this article. I would also like to thank him for hosting this article.</p>
 
-<p>
-I would like to thank and acknowledge Dr. Pantelis Sopasakis for his valuable suggestions and insights during the proof reading of this article. I would also like to thank him for hosting this article. 
-</p>
-
-# About the author:
+# About the author
 
 <p>
-My name is <b>Chandra Mouli G</b>, I am a <b>top-graduating</b> MSc Electronics student from the Queen’s University Belfast, with a strong academic foundation in Electrical and Electronics Engineering (B.Tech. E.E.E). For my MSc final project, I developed an <b>altitude control</b> system for drones using a <b>Kalman Filter</b> and a <b>linear multivariate controller</b>. I recently <b>co-authored</b> a paper on <b>"An Open-Source Quadcopter for Wind Field Surveying”</b> featuring my altitude control algorithm and I also have <b>three other AI-related publications</b>. 
+My name is <b>Chandra Mouli G</b>, I am a <b>top-graduating</b> MSc Electronics student from the Queen’s University Belfast, with a strong academic foundation in Electrical and Electronics Engineering (B.Tech. E.E.E). For my MSc final project, I developed an <b>altitude control</b> system for drones using a <b>Kalman Filter</b> and a <b>linear multivariate controller</b>. I recently <b>co-authored</b> a paper on <b>"An Open-Source Quadcopter for Wind Field Surveying”</b> (<a href="https://ieeexplore.ieee.org/document/10602911/">link</a>) featuring my altitude control algorithm and I also have <b>three other AI-related publications</b>. 
 
 My career interests are autonomous robotics, and advanced control engineering. I am particularly focused on the fields of <b>nonlinear and linear optimal control</b>, <b>model predictive control</b>, <b>stochastic systems and estimation</b>, and <b>reinforcement learning</b>.
 
