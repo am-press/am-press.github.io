@@ -12,7 +12,11 @@ collapsible: true
 
 > **Previous post:** <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>.<br/>
 
-<p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller.</p>
+<p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller. 
+</p>
+
+<p>
+It is recommended that the reader should first go through the previous post to help understand what follows in this post. The simulation code can be found at the following GitHub repository <b>(Insert link here)</b>.</p>
 
 <p>In this post, a simple fix for this undesirable simultaneous control activation will be discussed under Section 1. Under that same section, the addition of the obstacle avoidance feature will be discussed along with a showcase of the corresponding simulation results.</p>
 
@@ -38,22 +42,20 @@ collapsible: true
 |$0_{n \times m}$       | $[0]_{n \times m}$     | An $n \times m$ null matrix.|
 |$1_{n \times m}$       | $[1]_{n \times m}$     | An $n \times m$ matrix with every element equal to 1.|
 |$I_{n}$                | $I_{n \times n}$       | An $n \times n$ identity matrix.|
+|$\N$                   |$\\{0,\ 1,\ 2, \ldots\\}$| Set of all natural numbers.|
+|$\N_{[i,\ j]}$         |$\\{k \in \N: i \le k \le j\ \forall\ i,\ j \in \N \\}$| Set of all natural numbers between $i$ and $j$ inclusive.|
 |$\R$                   |$(-\infty,\ \infty)$    | Set of real numbers.        |
-|$\R^n$                 |$\\{\mathbf{x}_ {n \times 1}: x_i \in \R \ \forall \ i \in \Z_{[1,\ n]}, n \in \R\\}$| Set of all $n \times 1$ real vectors.|
-|$\R^{n \times m}$      |$\\{\mathbf{A}_ {n \times m}: a_ {i,\ j} \in \R \ \forall \ i \in \Z_{[1,\ n]},\text{ and } j \in \Z_{[1,\ m]}\\}$| Set of all $n \times 1$ real vectors.|
-|$\R_{[i,\ j]}$         |$\\{k \in \R: i \le k \le j\ \forall\ i,\ j \in \R\\}$| Set of real numbers from $i$ to $j$ inclusive.        |
+|$\R^n$                 |$\\{x_ {n \times 1}: x_i \in \R \ \forall \ i \in \N_{[1,\ n]}\\}$| Set of all $n \times 1$ real vectors.|
+|$\R^{n \times m}$      |$\\{A_ {n \times m}: a_ {i,\ j} \in \R \ \forall \ i \in \N_{[1,\ n]},\text{ and } j \in \N_{[1,\ m]}\\}$| Set of all $n \times 1$ real vectors.|
+|$\R_{[i,\ j]}$ or $[i,\ j]$ |$\\{k \in \R: i \le k \le j\ \forall\ i,\ j \in \R\\}$| Set of real numbers from $i$ to $j$ inclusive.        |
 |$\R_-$ or $\R_{\lt 0}$ |$(-\infty,\ 0)$         | Set of all negative real numbers.|
 |$\R_+$ or $\R_{\ge 0}$ |$[0,\ \infty)$          | Set of all positive real numbers.|
-|$\Z$                   |$(\ldots, -2,\ -1,\ 0,\ 1,\ 2, \ldots)$| Set of all integers.|
-|$\Z_{[i,\ j]}$         |$\\{k \in \Z: i \le k \le j\ \forall\ i,\ j \in \Z \\}$| Set of all integers between $i$ and $j$ inclusive.|
-|$\Z_-$ or $\Z_{\lt 0}$ |$(\ldots, -2,\ -1,\ 0)$ | Set of all negative integers.|
-|$\Z_+$ or $\Z_{\ge 0}$ |$[0,\ 1,\ 2, \ldots)$   | Set of all positive integers.|
-|$\mathbb{S}_+^n$       |$\\{\mathbf{A}\in \R^{n \times n}: \mathbf{x}^\mathsf{T}\mathbf{A}\mathbf{x} \ge 0 \ \forall \ \mathbf{x} \in \R^n \\}$| Set of all symmetric positive semi-definite matrices.|
-|$\mathbb{S}_{++}^n$    |$\\{\mathbf{A} \in \R^{n \times n}: \mathbf{x}^\mathsf{T}\mathbf{A}\mathbf{x} \gt 0 \text{ and } \mathbf{x}^\mathsf{T}\mathbf{A}\mathbf{x} = 0 \implies \mathbf{x} = 0_n \ \forall \ \mathbf{x} \in \R^n \\}$| Set of all symmetric positive definite matrices.|
+|$\mathbb{S}_+^n$       |$\\{A\in \R^{n \times n}: x^\mathsf{T}Ax \ge 0 \ \forall \ x \in \R^n \\}$| Set of all symmetric positive semi-definite matrices.|
+|$\mathbb{S}_{++}^n$    |$\\{A \in \R^{n \times n}: x^\mathsf{T}Ax \gt 0 \text{ and } x^\mathsf{T}Ax = 0 \implies x = 0_n \ \forall \ x \in \R^n \\}$| Set of all symmetric positive definite matrices.|
 
 <p>
 
-Similar to the previous post, the symbol **ఠ** will be used at the beginning of each section to indicate the introduction of a *road safety* feature.</p>
+Similar to the previous post the Telugu letter ttha, <b>ఠ</b>, will be used at the beginning of each section to indicate the introduction of a *road safety* feature.</p>
 
 ## ఠ Section 1: Obstacle avoidance
 
@@ -64,70 +66,123 @@ In this section, obstacle avoidance feature (*constraint*) will be added to the 
 
 <p>
 
-Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The solution for this problem is being introduced here, instead of in Section 2 of the previous post is because just like for obstacle avoidance the fix has to do with modifying the formulation (not the dynamics as in Section 2 of the previous post). The simplest fix is to modify the cost function in the minimisation problem as follows,
+Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The solution for this problem is being introduced here, instead of in Section 2 of the previous post is because just like for obstacle avoidance, the fix has to do with modifying the formulation (not the dynamics as in Section 2 of the previous post). The simplest fix is to modify the cost function in the minimisation problem as follows,
 </p>
 
 <p>
 $$
-\|\mathbf{p}^i_N - \mathbf{p}^i_d\|_{\mathbf{Q}_{1}}^2 + \sum_{k=0}^{N-1} \left(\|\mathbf{u}^i(k) - \mathbf{u}^i(k-1)\|_{\mathbf{Q}_2}^2 + \mathbf{R} \cdot \tilde{d}(k) \cdot \tilde{b}(k) \right)
+\|p_N - p^d\|_{Q_{1}}^2 + \sum_{k=0}^{N-1} \left(\|u_k - u_{k-1}\|_{Q_2}^2 + R \cdot \tilde{d}_k \cdot \tilde{b}_k \right)
 $$
 </p>
 
 <p>
 
-Where $\mathbf{R} \gt 0$ and must be a very large number. This imposes that the best (*optimal*) way to avoid a large cost is to make the selected control actions $\tilde{d}$ and $\tilde{b}$ not be greater than zero at the same time. Since $\tilde{d}$ and $\tilde{b} \in [0, 1]$, their product need not be squared in the cost function.
+Where $R \gt 0$ and must be a very large number. This imposes that the best (*optimal*) way to avoid a large cost is to make the selected control actions $\tilde{d}$ and $\tilde{b}$ not be greater than zero at the same time. Since $\tilde{d}$ and $\tilde{b} \in [0, 1]$, their product need not be squared in the cost function.
 </p>
 
 <p>
 
-The obstacle avoidance feature shall be introduced in the form of additional constraints to the formulation. In general, it is easy to both design and compute ellipsoidal constraints and for this reason, moving forward all obstacles will be approximated as either ellipses or circles with radii selected in such a way that guarantees *safety* (collision avoidance). For that, the radii shall address both the size of the obstacle puls some safe distance and a buffer zone that takes the size of the vehicle into account. It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, such ellipses are called as safety circles.
+The obstacle avoidance feature shall be introduced in the form of additional constraints to the formulation. In general, it is easy to both design and implement ellipsoidal constraints and for this reason, moving forward all obstacles will be approximated as either ellipses or circles with radii selected in such a way that guarantees *safety* (collision avoidance). For that, the radii shall address both the size of the obstacle plus some safe distance and a buffer zone that takes the size of the vehicle into account. 
 </p>
 
 <p>
 
-For demonstration, an obstacle is placed with its centre at the origin with the radius of its safety circle equal to $2$ mts. The corresponding obstacle avoidance constraint is as follows,
+The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone in excluded, the calculated optimal path might end-up entering some part of the vehicle inside the safety circle (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, such ellipses are called as safety circles.
+</p>
+
+<p>
+
+For demonstration, an obstacle is placed with its centre at the origin with the radius of its safety circle equal to $2 + \frac{w_c}{2}$ mts, where $w_c = 0.25$ mts is the width of the car. The corresponding obstacle avoidance constraint can be formulated as follows,
 </p>
 
 <p>
 $$
 \begin{aligned}
-&p_x^2(k) + p_y^2(k) > 2^2 \\
-\implies &4 - p_x^2(k) - p_y^2(k) < 0,\ \forall k \in \Z_{[1, N]}
+&p_{x, k}^2 + p_{y, k}^2 > \left(2 + \frac{w_c}{2}\right)^2 \\
+\implies &\left(2 + \frac{w_c}{2}\right)^2 - p_{x, k}^2 - p_{y, k}^2 < 0,\ \forall k \in \Z_{[1, N]}
 \end{aligned}
 $$
 </p>
 
 <p>
 
-Needless to mention that it should be ensured that $(p_x(0), p_y(0)) \notin \\{(x, y): x^2 + y^2 \le 2^2\\}$ i.e., the system does not start from a position inside the safety circle. With these modification the new formulation can we written as follows,
+Needless to mention that it should be ensured that $p^2_{x, 0} + p^2_{y, 0} \gt (2 + \frac{w_c}{2})^2$ i.e., the system does not start from a position inside the safety circle. With these changes, the modified NMPC formulation can be written as follows,
 </p>
 
 <p>
 $$
 \begin{aligned}
-\mathbb{P}^i_N(\mathbf{z}^i(0)) :\ &\underset{\mathbf{u}^i}{\text{minimise}}\ \|\mathbf{p}^i_N - \mathbf{p}^i_d\|_{\mathbf{Q}_{1}}^2 + \sum_{k=0}^{N-1} \left(\|\mathbf{u}^i(k) - \mathbf{u}^i(k-1)\|_{\mathbf{Q}_2}^2 + \mathbf{R} \cdot \tilde{d}(k) \cdot \tilde{b}(k) \right) \\
-\text{s.t.}\ & \mathbf{z}^i(0) = \mathbf{z}^{i-1}(N), \\
-\ &\mathbf{u}^i(-1) = \mathbf{u}^{i-1}(N-1), \\
-\ &\mathbf{z}^i(k+1) = \mathbf{g}(\mathbf{z}^i(k), \mathbf{u}^i(k)),\ k \in \Z_{[0, N-1]}, \\
-\ &\mathbf{u}^i(k) \in \bm{\mu},\ k \in \Z_{[0, N-1]}, \\
-\ &v_x^i(k) \in \bm{\gamma},\ k \in \Z_{[0, N-1]}, \\
-\ &2^2 - (p_x^i(k))^2 - (p_y^i(k))^2 < 0,\ k \in \Z_{[1, N]}, \\
-\ &\mathbf{p}^0(0) \notin \{(x, y): x^2 + y^2 \le 2^2\}, \\
-\ &\mathbf{Q}_1 \in \mathbb{S}^{2}_{++}, \\
-\ &\mathbf{Q}_2 \in \mathbb{S}^{n_u}_{++}, \text{ and}\\
-\ &i \in \Z_{[0, \bm{S}]}.
+\mathbb{P}_ N(z, u^\star_ {\text{p}}) :\ &\underset{\bm{u}_ N}{\text{minimise}}\ \|p_ N - p^d\|_ {Q_ {1}}^2 + \sum_ {k=0}^{N-1} \left( \|u_ k - u_ {k-1}\|_ {Q_ 2}^2 + R \cdot \tilde{d}_k \cdot \tilde{b}_k \right) \\
+\text{s.t.}\ & z = z^\star_ {\text{p}}, \\
+\ &u_ {-1} = u^\star_ {\text{p}}, \\
+\ &z_ {k+1} = \mathbf{g}(z_ k, u_ k),\ k \in \N_ {[0, N-1]}, \\
+\ &u_ k \in \mathbf{U},\ k \in \N_ {[0, N-1]}, \\
+\ &v_ {x, k} \in \bm{\Gamma},\ k \in \N_ {[0, N-1]}, \text{ and} \\
+\ &\left(2 + \frac{w_c}{2}\right)^2 - p^2_{x, k} - p^2_{y, k} < 0,\ k \in \Z_{[1, N]}.
 \end{aligned}
 $$
 </p>
 
 <p>
 
-The simulation results of this formulation with $N=50,\ \bm{S} = 300,\ T=0.01$, $\mathbf{R} = 1000000$, $\mathbf{p}^0(0) = [-2, 2]^\mathsf{T}$, and $\mathbf{p}^i_d = [1, 4]^\mathsf{T}\ \forall\ i \in \Z_{[0, \bm{s}]}$ are shown in the following GIF,
+Here, $Q_ 1 \in \mathbb{S}^{2}_ {++}$ and $Q_ 2 \in \mathbb{S}^{n_ u}_ {++}$. In Python3, the modified stage cost function can be written as,
+</p>
+
+```python
+# Set a large value for R
+R = 1000000
+# Define the new stage cost to fix the undesired simultaneous actuation
+# of the acceleration and brake inputs by incurring a huge penalty.
+def stage_cost(u_current, u_prev):
+    return (u_current.T - u_prev.T) @ Q2 @ (u_current - u_prev)\
+            + R * u_current[0] * u_current[2]  # Fix
+```
+
+<p>The modified formulation of on the NMPC in Python3 can be done as follows,</p>
+
+```python
+penality_constraint_position = 0
+# Formulate the NMPC total cost and constraints
+for t in range(N):
+    # Set current time step input
+    u_current = u_seq[t * nu : (t + 1) * nu]
+    # Add stage cost to total cost for the current time step
+    total_cost += stage_cost(u_current, u_prev)
+    # Set current state to resultant state of the current input
+    z_t = dynamics(z_t, u_current)  
+    # Change previous input to current input for next iteration
+    u_prev = u_current  
+    # Add set vx maximum constraint
+    penality_constraint_vx += cs.fmax(0, cs.norm_1(z_t[3]) - vmax) 
+    # Add set vx minimum constraint 
+    penality_constraint_vx += cs.norm_1(cs.fmin(vmin, z_t[3])) 
+    # incur penalty if inside the obstacle otherwise 0 
+    penality_constraint_position += cs.fmax(0, (2 + car_width)**2 - z_t[0]**2 - z_t[1]**2)  
+
+# Add terminal cost to total cost
+total_cost += terminal_cost(z_t)
+
+# Define rectangular constraints for inputs
+U = og.constraints.Rectangle(umin_seq, umax_seq)
+
+# Define and build the problem
+problem = og.builder.Problem(u_seq, problem_params, total_cost)
+problem = problem.with_constraints(U)
+# Add the obstacle constraints to velocity constraints
+problem = problem.with_penalty_constraints(penality_constraint_vx 
+                                    + penality_constraint_position)
+```
+
+<p>
+
+The simulation results of this formulation with $N=50,\ S = 300,\ T=0.01$ s, $R = 1000000$, $p_0 = [-2, 2]^\mathsf{T}$, and $p^d = [1, 4]^\mathsf{T}$ are shown in the following GIF,
 </p>
 
 <div>
 <img src="/mpc_car_obst_2m_6.gif" alt="Simulation results" width="640" height="400">
 </div>
+
+<p><b>Noe:</b> The above representation of the safety circle, in blue, excludes the car width in its radius for visualisation purpose. Had it been included, it would appear as if the car is driving inside the obstacle. Going forward this would be the case, where the car width will be included in the constraint formulation but will be excluded from the visual representation.</p>
 
 <p>
 
@@ -136,10 +191,25 @@ From the above GIF, it can be seen that the NMPC controlled vehicle is indeed av
 
 <p>
 
-It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the wright matrices $\mathbf{Q}_1$ and $\mathbf{Q}_2$, which will be done at a later point. But, for Section 4 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
+Absence of the buffer zone would mean that the calculated optimal path only prevents the $(C_g)$ of the vehicle from entering the blue circle. This makes the rest of the vehicle free to enter (<em>collide</em>) with the object.
+</p>
+
+<p>
+
+It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the wright matrices $Q_1$ and $Q_2$, which will be done at a later point. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
 </p>
 
 ## ఠ Section 2: Lane-keeping
+
+<p>
+
+In order for the vehicle to follow a particular desired path, the reference position not only needs to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level trajectory generator algorithm needs to be introduced. This trajectory generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference positions at every instant
+</p>
+
+<p>
+
+This makes the vehicle (enabled by the NMPC controller) continuously chase after the changing reference. If the trajectory generator enables the changing reference to trace a desired path, this would, to some extent, guarantee that the vehicle also follows that particular path. One particular limitation of this <em>guarantee</em> will be evident from the simulation results of this section, emphasising on the importance of formulating proper constraints.
+</p>
 
 track sampling = 40 samples/m, 120 samples look ahead
 
