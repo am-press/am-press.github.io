@@ -203,41 +203,108 @@ It should also be noted that before $t<1$, there was a noticeable magnitude of $
 
 <p>
 
-In order for the vehicle to follow a particular desired path, the reference position not only needs to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level trajectory generator algorithm needs to be introduced. This trajectory generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference positions at every instant
+In order for the vehicle to follow a particular (desired) path, the reference position not only need to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference positions at every instant.
 </p>
 
 <p>
 
-This makes the vehicle (enabled by the NMPC controller) continuously chase after the changing reference. If the trajectory generator enables the changing reference to trace a desired path, this would, to some extent, guarantee that the vehicle also follows that particular path. One particular limitation of this <em>guarantee</em> will be evident from the simulation results of this section, emphasising on the importance of formulating proper constraints.
+This makes the vehicle (enabled by the NMPC controller) continuously chase after the changing reference. If the reference generator enables the changing reference to trace a desired path, this would, to some extent, guarantee that the vehicle also follows that particular path. One particular limitation of this <em>guarantee</em> will be evident from the simulation results of this section, emphasising on the importance of formulating proper constraints.
 </p>
 
-track sampling = 40 samples/m, 120 samples look ahead
+<p>
+
+Inspired from the reference generator in [1], the reference generator used for this article can be summarised in the following algorithm.
+</p>
+
+### Reference generator algorithm
+
+<p>
+
+Consider a path that is sampled into $s \in \N_{>0}$ equidistant (Euclidean distance between any two successive samples is constant) samples. Let the ordered collection of this sampled space be $\bm{p}^\text{traj}$. Let the $i^\text{th}$ point (element) in this collection be represented as $\bm{p}^\text{traj}[i] = p^\text{traj}_ i = [p^\text{traj}_ {x, i},\ p^\text{traj}_ {y, i}]^\mathsf{T}$.
+</p>
+
+<p>
+
+Let $p^\text{traj}_ {i_ p}$ be the projection of the current position of the vehicle $p^c = [p_x^c,\ p_y^c]^\mathsf{T}$ on to the sampled space. The goal is to find a reference position in this sampled space, that is $l \in \N_ {>0}$ points ahead of $p^\text{traj}_ {i_ p}$. Then the reference generator algorithm can be written as,
+</p>
+
+<p>
+
+<b>Algorithm steps:</b>
+
+1. Sample the desired trajectory into an ordered collection of equidistant position points as: $\bm{p}^\text{traj}$.
+2. Project the current position of the vehicle on to $\bm{p}^ \text{traj}$ and find the corresponding index as: $i_ p = \text{min}\left\\{\underset{i}{\text{argmin}} \\|p^c - p^\text{traj}_ i\\|^2 \right\\}$.
+3. With $p^\text{traj}_ {i_ p}$ being the closest point to the vehicle on the trajectory, find a reference position that is $l$ points ahead as: $p^d = p^\text{traj}_ {i_ p + l} = \bm{p}^\text{traj}[i_ p + l]$.
+4. Set $p^d$ as the new reference the NMPC controller and run the simulation for one iteration.
+5. repeat steps $2$ to $4$ till the end of the simulation.
+</p>
+
+<p><b>Note:</b> This approach for finding $i_ p$ is naive, in that the reference generator can be easily fooled to generate a reference position that is either too far ahead or (too far) behind the current vehicle position. In simple terms, this reference generator approach cannot guarantee the robustness of the NMPC controlled system for any arbitrary path. It is a good exercise for the reader to experiment and see why this is true. Addressing this issue is beyond the scope of this article and the reader is encouraged to do their own research.</p>
+
+<p>
+
+This algorithm is implemented in Python3 with a elliptical track of width $w = 1$ m. The major axis radius of the centre of the track is equal to $a = 5$ m and the corresponding minor axis radius is equal to $b = 4.5$ m. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z=[5, 0]^\mathsf{T}$ and the realtime results are shown in the GIF below.
+</p>
 
 <div>
-<img src="/track_drive_higer_resolution_track.gif" alt="Simulation results" width="640" height="400">
+<img src="/track_drive_higer_resolution_track.gif" alt="Simulation results: with track sampling = 40 samples/m and 120 samples look ahead." width="640" height="400">
 </div>
+
+<p>
+
+In the GIF above, the black path represents the elliptical track and yellow curve represents the centre division lane of the elliptical path. It seems like the vehicle is successfully navigating around the track. A slowed down version of the simulation results are shown in the GIF below. 
+</p>
+
+<p>
+
+For further clarity, a white dot representing the projection of the current position of the vehicle on to the centre lane ($p^\text{traj}_ {i_ p}$) and a red dot representing the generated reference position $p^d$ are added to the plot.</p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_with_ref.gif" alt="Simulation results" width="640" height="400">
+<img src="/track_drive_higer_resolution_track_with_ref.gif" alt="Simulation results: A slowed version of the simulation results with track sampling = 40 samples/m and 120 samples look ahead." width="640" height="400">
 </div>
+
+<p>
+
+As it can be seen from the simulation results above, the vehicle successfully follows (chases after) the reference without exiting the track (is it though?). To verify this, the actual trajectory of the vehicle is plotted with a blue trail in the GIF below.
+</p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_with_ref_trail.gif" alt="Simulation results" width="640" height="400">
+<img src="/track_drive_higer_resolution_track_with_ref_trail.gif" alt="Simulation results: with vehicle trail in blue." width="640" height="400">
 </div>
 
-track sampling = 40 samples/m, 200 samples look ahead
+<p>
 
-<div>
-<img src="/track_drive_higer_resolution_track_distant_destination.gif" alt="Simulation results" width="640" height="400">
-</div>
-
-<div>
-<img src="/track_drive_higer_resolution_track_distant_destination_with_ref.gif" alt="Simulation results" width="640" height="400">
-</div>
+Though, it seems like the trail of the vehicle never exits the track, this is only because the choice of the track dimensions and the look ahead $l = 120$ samples coincidentally leave enough time and space for the vehicle to trace an elliptical path of comparable dimensions. Had the dimensions of the track been a bit different or the look ahead been any larger, the vehicle could have exited the track. To prove this, the same simulation is repeated with $l = 200$ samples and the results are shown in the GIF below.
+</p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_distant_destination_with_ref_trail.gif" alt="Simulation results" width="640" height="400">
+<img src="/track_drive_higer_resolution_track_distant_destination.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
 </div>
+
+<p>
+
+A slower version with reference and vehicle projections is shown in the GIF below.
+</p>
+
+<div>
+<img src="/track_drive_higer_resolution_track_distant_destination_with_ref.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+</div>
+
+<p>
+
+Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference and it staying on the track was a coincidence. This is because there is no constraint (<em>safety</em>) in the NMPC formulation that explicitly states that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
+</p>
+
+<div>
+<img src="/track_drive_higer_resolution_track_distant_destination_with_ref_trail.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+</div>
+
+<p>
+
+This finding is important for two reasons:
+1. Safety constraints must be explicit, meaning if it is not in the formulation, there is not guarantee that the NMPC controlled system will obey it.
+2. Safety must be a priority over reference tracking.
+</p>
 
 ## ఠ Section 2: Lane-keeping + Obstacle Avoidance
 
