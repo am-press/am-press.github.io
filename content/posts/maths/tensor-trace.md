@@ -67,15 +67,14 @@ collapsible: true
 <p>Before we proceed with the proof, note that</p> 
 <p>$${\rm Hom}(V, V) \cong V^* \otimes V \cong V^* \otimes (V^*)^* \cong (V^*)^* \otimes V^* \cong {\rm Hom}(V^*, V^*).$$</p>
 <p><em>Proof.</em> Suppose that a basis of $V$ is $\{e_1,\ldots, e_n\}$ and let the [[Basis of vector space#Dual basis|dual basis]] be $\{e_1^*, \ldots, e_n^*\}$. The canonical embedding of the basis of $V$ onto $V^{**}$ is $e_i^{**}$. We have</p>
-<p>$$\begin{align}
-\mathrm{tr} T {}={}& \mathrm{tr} \left( \sum_i e_i^* \otimes Te_i\right) \\
+<p>$$\begin{aligned}\mathrm{tr} T {}={}& \mathrm{tr} \left( \sum_i e_i^* \otimes Te_i\right) \\
 {}={}&  \sum_i \mathrm{tr}(e_i^* \otimes Te_i) \\
 {}={}&  \sum_i e_i^* (Te_i) \\
 {}={}&  \sum_i T'(e_i^*)(e_i) \\
 {}={}&  \sum_i e_i^{**}(T'(e_i^*)) \\
 {}={}&  \sum_i \mathrm{tr} (e_i^{**} \otimes T'(e_i^*)) \\
 {}={}& \mathrm{tr} T',
-\end{align}$$</p>
+\end{aligned}$$</p>
 <p>which completes the proof. $\Box$</p>
 
 ### Trace on a tensor product space
@@ -95,7 +94,7 @@ collapsible: true
 </div>
 
 <p>This means </p>
-<p>$$\mathrm{tr}((\id \otimes \mathrm{tr} \otimes \id)(f\otimes g)) {}={} \mathrm{tr}((\id \otimes \mathrm{tr} \otimes \id)(g\otimes f))$$</p>
+<p>$$\mathrm{tr}((\mathrm{id} \otimes \mathrm{tr} \otimes \mathrm{id})(f\otimes g)) {}={} \mathrm{tr}((\mathrm{id} \otimes \mathrm{tr} \otimes \mathrm{id})(g\otimes f))$$</p>
 <p>Equivalently</p>
 <p>$$\mathrm{tr}(g\circ f) {}={} \mathrm{tr}(f\circ g).$$</p>
 <p>More generally</p>
