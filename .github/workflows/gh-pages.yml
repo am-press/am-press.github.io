@@ -56,7 +56,7 @@ jobs:
         run: |
           hugo \
             --gc --verbose \
-            --baseURL ${{ steps.pages.outputs.base_url }}
+            --baseURL https://am-press.github.io/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
