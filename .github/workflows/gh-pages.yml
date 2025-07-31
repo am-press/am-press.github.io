@@ -54,7 +54,7 @@ jobs:
         run: git submodule update --remote --merge
       - name: Build with Hugo
         run: |
-          hugo --gc --verbose --baseURL="https://am-press.github.io/"
+          hugo --gc --baseURL="https://am-press.github.io/"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
