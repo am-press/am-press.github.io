@@ -31,7 +31,7 @@ A **well-order** means that every subset $A\subset\N^n$ has a least element. Thi
 
 ## Monomial orders
 
-### Lexicographic order
+<h3 id="lex">Lexicographic order</h3>
 
 <div style="border-style:solid;border-width:1.5px;padding: 10px 15px 0px 10px; margin-bottom: 10px" id="lex">
     <p><strong>Definition 1: lexicographic order.</strong> 
@@ -56,7 +56,7 @@ A **well-order** means that every subset $A\subset\N^n$ has a least element. Thi
 <p>The second example is a little weird. The term $x_1$ has degree $1$, but $x_2^2x_3$ has degree $3$, yet $x_1 >_{\rm lex} x_2^2x_3$.</p>
 
 
-### Graded lexicographic order
+<h3 id="grlex">Graded lexicographic order</h3>
 
 <p>To remedy this we introduce an ordering called the <b>graded lexicographic order</b> which firstly orders the monomials by their total degree and then lexicographically.</p>
 
