@@ -11,9 +11,9 @@ collapsible: true
 ---
 
 
-Monomial orderings are used to define a division algorithm for multivariate polynomials. There can be many orderings. 
+<p>Monomial orderings are used to define a division algorithm for multivariate polynomials. There can be many such orderings.</p>
 
-A monomial ordering in $k[x_1, \ldots, x_n]$, where $k$ is a field, is essentially a multiindex<sup>(<a href="#endnotes">1</a>)</sup> because every monomial $x_1^{i_1}x_2^{i_2}\cdots x_n^{i_n}$ is uniquely identified by a vector $\iota = (i_1, \ldots, i_n)\in \mathbb{N}^n$, which is a multiindex. An ordering of monomials is an ordering in $\N^n$. 
+<p>A monomial ordering in $k[x_1, \ldots, x_n]$, where $k$ is a field, is essentially a multiindex<sup>(<a href="#endnotes">1</a>)</sup> because every monomial $x_1^{i_1}x_2^{i_2}\cdots x_n^{i_n}$ is uniquely identified by a vector $\iota = (i_1, \ldots, i_n)\in \mathbb{N}^n$, which is a multiindex. An ordering of monomials is an ordering in $\N^n$.</p>
 
 ## Desiderata
 
