@@ -2,7 +2,7 @@
 author: "Pantelis Sopasakis"
 title:  "Kim: Exercise 3.1.R (Tensors)"
 date: 2025-07-31
-description: "Tensor trace"
+description: "Tensor trace: exercise from Kim"
 summary: "An interesting exercise from D. Kim, A rough guide to linear algebra"
 math: true
 series: ["Mathematix"]
