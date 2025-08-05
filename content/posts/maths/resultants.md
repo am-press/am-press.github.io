@@ -255,7 +255,7 @@ y^2-3xy+1 {}={}& 0.
 In $R[x, y]$, the resultant with respect to $y$ is </p>
 <p>$$\operatorname{res}_y: R[x, y] \times R[x, y] \to R[x]$$</p>
 <p>More generally,</p>
-<p>$$\operatorname{res}_{x_i}: R[x_1, \ldots, x_n] \times R[x_1, \ldots, x_n] \to R[x_1,\ldots, x_{i-1}, x_{i+1}, \ldots, x_n]$$</p>
+<p>$$\operatorname{res}_{x_i}: R[x_1, \ldots, x_n] \times R[x_1, \ldots, x_n] \to R[x_1,\ldots, x_{i-1}, x_{i+1}, \ldots, x_n].$$</p>
 
 
 ## Endnotes
@@ -274,10 +274,10 @@ In $R[x, y]$, the resultant with respect to $y$ is </p>
 
 ## References
 
-1. A good abstract algebra book that covers polynomials is: Thomas W. Judson, [Abstract algebra: theory and applications](http://abstract.ups.edu/download/aata-20220728-print.pdf). [[Ring#Integral domain|Integral domains]] are also of interest because $ab=0$ implies $a=0$ or $b=0$ and this allows to establish $\deg(pq)=\deg p + \deg q$ for $p, q\in F[x]$ (which is not generally true).
+1. A good abstract algebra book that covers polynomials is: Thomas W. Judson, [Abstract algebra: theory and applications](http://abstract.ups.edu/download/aata-20220728-print.pdf). Integral domains are also of interest because $ab=0$ implies $a=0$ or $b=0$ and this allows to establish $\deg(pq)=\deg p + \deg q$ for $p, q\in F[x]$ (which is not generally true).
 2. H Woody, [Polynomial resultants](http://buzzard.ups.edu/courses/2016spring/projects/woody-resultants-ups-434-2016.pdf), notes, accessed on 28 June 2024
 3. Van Der Waerden, Algebra, vol I, Springer, 1991.
-4. D.A. Cox, J. Little, D. O' Shea, Ideals, Varieties, and Algorithms: An Introduction to Computational Algebraic Geometry and Commutative Algebra, 4th Edition, Springer, 2015
+4. D.A. Cox, J. Little, D. O' Shea, Ideals, Varieties, and Algorithms: An Introduction to Computational Algebraic Geometry and Commutative Algebra, 4th Edition, Springer, 2015; see Section 3.6
 5. Manuela Wiesinger-Widi, Gröbner Bases and Generalized Sylvester Matrices, ACM Communications in Computer Algebra, Vol. 45, No. 2, Issue 176, June 2011, [link](https://dl.acm.org/doi/pdf/10.1145/2016567.2016594) 
 6. Marko Roczen, Gröbner Bases and Resultants, Autumn School on Commutative Algebra and Combinatorics, Universitiy of Constanta, Eforie 1999, [link](https://www2.mathematik.hu-berlin.de/~roczen/papers/eforie2.pdf), accessed on 31 July 2024
 7. I.M. Gelfand, M.M. Kapranov, and A.V. Zeleninsky, Discriminants, resultants, and multidimensional determinants, Modern Birkhäuser Classics, 2008, [link](https://www.maths.ed.ac.uk/~v1ranick/papers/gelkapzel.pdf) 
