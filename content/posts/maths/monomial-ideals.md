@@ -1,7 +1,7 @@
 ---
 author: "Pantelis Sopasakis"
 title:  "Monomial ideals and Dickson's lemma"
-date: 2025-08-01
+date: 2025-08-02
 description: "Monomial ideals and Dickson's lemma"
 summary: "Monomial ideals and Dickson's lemma"
 math: true

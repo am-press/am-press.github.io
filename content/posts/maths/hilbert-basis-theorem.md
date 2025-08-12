@@ -1,7 +1,7 @@
 ---
 author: "Pantelis Sopasakis"
 title:  "Hilbert Basis Theorem"
-date: 2025-08-01
+date: 2025-08-05
 description: "Hilbert Basis Theorem"
 summary: "Hilbert Basis Theorem"
 math: true

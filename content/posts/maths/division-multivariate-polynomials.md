@@ -1,7 +1,7 @@
 ---
 author: "Pantelis Sopasakis"
 title:  "Division of multivariate polynomials"
-date: 2025-08-01
+date: 2025-08-03
 description: "Division of multivariate polynomials"
 summary: "Division of multivariate polynomials"
 math: true

@@ -1,7 +1,7 @@
 ---
 author: "Pantelis Sopasakis"
 title:  "Resultants"
-date: 2025-08-01
+date: 2025-08-12
 description: "Resultants"
 summary: "Resultants"
 math: true
