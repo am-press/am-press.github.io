@@ -23,9 +23,9 @@ collapsible: true
 The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. For simplicity, throughout this article, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries. 
 </p>
 
-<p>In this post, a simple fix for this undesirable simultaneous control activation will be discussed under Section 1. Under that same section, the addition of the obstacle avoidance feature will be discussed along with a showcase of the corresponding simulation results.</p>
+<p>In this post, a simple fix for the undesirable simultaneous activation of the control actions, acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$, will be discussed under Section 1. Under that same section, the addition of the obstacle avoidance feature will be discussed along with a showcase of the corresponding simulation results.</p>
 
-<p>In Section 2, the discussion will be focused on the introduction of the lane-keeping feature by building upon a high-level reference generator algorithm. This reference generator algorithm is inspired by the work in [1]. After showcasing the corresponding simulation results the section ends on an interesting note about the safety constraints.</p>
+<p>In Section 2, the discussion will be focused on the introduction of the lane-keeping feature by building upon a high-level reference generator algorithm. This reference generator algorithm is inspired by the work in [1]. After showcasing the corresponding simulation results, the section ends on an interesting note about the safety constraints.</p>
 
 <p>The post ends with Section 3, where the obstacle avoidance feature will be combined with lane-keeping. In this section a special function will be introduced to the reference generator algorithm that helps with real-time (dynamic) obstacle avoidance. The discussion then moves on to how this special function can help with avoiding obstacles in motion and ends with the showcase of corresponding simulation results.</p>
 
@@ -71,7 +71,7 @@ In this section, obstacle avoidance feature (*constraint*) will be added to the 
 
 <p>
 
-Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The solution for this problem is being introduced here, instead of in Section 2 of the previous post is because just like for obstacle avoidance, the fix has to do with modifying the formulation (not the dynamics as in Section 2 of the previous post). The simplest fix is to modify the cost function in the minimisation problem as follows,
+Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The reason for not addressing this in Section 2 of the previous post is because, similar to obstacle avoidance, the fix has to do with modifying the formulation and not the dynamics as in Section 2 of the previous post. The simplest fix is to modify the cost function in the minimisation problem as follows,
 </p>
 
 <p>
@@ -82,17 +82,17 @@ $$
 
 <p>
 
-Where $R \gt 0$ and must be a very large number. This imposes that the best (*optimal*) way to avoid a large cost is to make the selected control actions $\tilde{d}$ and $\tilde{b}$ not be greater than zero at the same time. Since $\tilde{d}$ and $\tilde{b} \in [0, 1]$, their product need not be squared in the cost function.
+Where $R \gg 0$ and must be a very large number. This imposes that the best (*optimal*) way to avoid a large cost, is to make the selected control actions $\tilde{d}$ and $\tilde{b}$ not be greater than zero at the same time. Meaning, to avoid simultaneous activation of both the control actions. Since $\tilde{d}$ and $\tilde{b} \in [0, 1]$, their product need not be squared in the cost function.
 </p>
 
 <p>
 
-The obstacle avoidance feature shall be introduced in the form of additional constraints to the formulation. In general, it is easy to both design and implement ellipsoidal constraints and for this reason, moving forward all obstacles will be approximated as either ellipses or circles with radii selected in such a way that guarantees *safety* (collision avoidance). For that, the radii shall address both the size of the obstacle plus some safe distance and a buffer zone that takes the size of the vehicle into account. 
+The obstacle avoidance feature shall be introduced in the form of additional constraints to the formulation. In general, it is easy to both design and implement ellipsoidal constraints, and for this reason, moving forward all obstacles will be approximated as either ellipses or circles with radii selected in such a way that guarantees *safety* (collision avoidance). For that, the radii shall address both the size of the obstacle plus some safe distance and a buffer zone that takes the size of the vehicle into account. 
 </p>
 
 <p>
 
-The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone in excluded, the calculated optimal path might end-up entering some part of the vehicle inside the safety circle (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, such ellipses are called as safety circles.
+The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone in excluded, the calculated optimal path might end-up pushing some part of the vehicle into the safety circle (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, although inaccurate, such ellipses are called as safety circles.
 </p>
 
 <p>
@@ -119,7 +119,7 @@ $$
 
 <p>
 
-Needless to mention that it should be ensured that $p^2_{x, 0} + p^2_{y, 0} \gt (2 + \frac{w_c}{2})^2$ i.e., the system does not start from a position inside the safety circle. With these changes, the modified NMPC formulation can be written as follows,
+Needless to mention that it should be ensured that $p^2_{x, 0} + p^2_{y, 0} \gt (2 + \frac{w_c}{2})^2$ i.e., the system (vehicle) does not start from a position inside the safety circle. With these changes, the modified NMPC formulation can be re-written as follows,
 </p>
 
 <p>
@@ -195,7 +195,7 @@ The simulation results of this formulation with $N=50,\ S = 300,\ T=0.01$ s, $R 
 <img src="/mpc_car_obst_2m_6.gif" alt="Simulation results" width="640" height="400">
 </div>
 
-<p><b>Noe:</b> The above representation of the safety circle, in blue, excludes the car width in its radius for visualisation purpose. Had it been included, it would appear as if the car is driving inside the obstacle. Going forward this would be the case, where the car width will be included in the constraint formulation but will be excluded from the visual representation.</p>
+<p><b>Note:</b> The above representation of the safety circle, in blue, excludes the car width (dark teal obstacle ellipse) only in its visualisation. Had it been included, it would falsely appear as if the car is driving inside the obstacle. Going forward this would be the case, where the car width will be included in the constraint formulation but will be excluded from the visual representation.</p>
 
 <p>
 
@@ -209,14 +209,14 @@ Absence of the buffer zone would mean that the calculated optimal path only prev
 
 <p>
 
-It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the wright matrices $Q_1$ and $Q_2$, which will be done at a later point. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
+It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the weight matrices $Q_1$ and $Q_2$, which will be done at a later point. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
 </p>
 
 ## ఠ Section 2: Lane-keeping (sort of)
 
 <p>
 
-In order for the vehicle to follow a particular (desired) path, the reference position not only need to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference positions at every instant.
+In order for the vehicle to follow a particular (desired) path, the reference position not only need to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference position at every instant.
 </p>
 
 <p>
@@ -238,7 +238,7 @@ Consider a path that is sampled into $s \in \N_{>0}$ equidistant (Euclidean dist
 
 <p>
 
-Let $p^\text{traj}_ {i_ p}$ be the projection of the current position of the vehicle $p^c = [p_x^c,\ p_y^c]^\mathsf{T}$ on to the sampled space. The goal is to find a reference position in this sampled space, that is $l \in \N_ {>0}$ points ahead of $p^\text{traj}_ {i_ p}$. Then the reference generator algorithm can be written as,
+Let $p^\text{traj}_ {i_ p}$ be the projection of the current position of the vehicle $p^c = [p_x^c,\ p_y^c]^\mathsf{T}$ on to the sampled space. The goal is to find a reference position in this sampled space ($\bm{p}^\text{traj}$), that is $l \in \N_ {>0}$ points ahead of $p^\text{traj}_ {i_ p}$. Then the reference generator algorithm can be written as,
 </p>
 
 <p>
@@ -248,7 +248,7 @@ Let $p^\text{traj}_ {i_ p}$ be the projection of the current position of the veh
 1. Sample the desired trajectory into an ordered collection of equidistant position points as: $\bm{p}^\text{traj}$.
 2. Project the current position of the vehicle on to $\bm{p}^ \text{traj}$ and find the corresponding index as: $i_ p = \text{min}\left\\{\underset{i}{\text{argmin}} \\|p^c - p^\text{traj}_ i\\|^2 \right\\}$.
 3. With $p^\text{traj}_ {i_ p}$ being the closest point to the vehicle on the trajectory, find a reference position that is $l$ points ahead as: $p^d = p^\text{traj}_ {i_ p + l} = \bm{p}^\text{traj}[i_ p + l]$.
-4. Set $p^d$ as the new reference the NMPC controller and run the simulation for one iteration.
+4. Set $p^d$ as the new reference the of NMPC controller and run the simulation for one iteration.
 5. repeat steps $2$ to $4$ till the end of the simulation.
 </p>
 
@@ -305,7 +305,7 @@ A slower version with reference and vehicle projections is shown in the GIF belo
 
 <p>
 
-Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference and it staying on the track was a coincidence. This is because there is no constraint (<em>safety</em>) in the NMPC formulation that explicitly states that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
+Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference and it staying on the track was a coincidence. This is because, there is no constraint (<em>safety</em>) in the NMPC formulation that explicitly states that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
 </p>
 
 <div>
@@ -315,7 +315,7 @@ Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to c
 <p>
 
 This is not true lane-keeping but rather the first step towards it. True lane-keeping is achieved when the system actively puts effort to not exit the track. This will be discussed in the next section, but for now this finding is important for two reasons:
-1. Safety constraints must be explicit, meaning if it is not in the formulation, there is not guarantee that the NMPC controlled system will obey it.
+1. Safety constraints must be explicit, meaning if it is not in the formulation, there is no guarantee that the NMPC controlled system will obey it.
 2. Safety must take priority over reference tracking.
 </p>
 
