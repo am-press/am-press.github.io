@@ -10,13 +10,18 @@ tags: ["Nonlinear Control", "NMPC", "Obstacle Avoidance", "Lane-Keeping"]
 collapsible: true
 ---
 
-> **Previous post:** <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>.<br/>
+> <b>Previous post:</b> <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>.<br/>
 
 <p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller. 
 </p>
 
 <p>
-It is recommended that the reader should first go through the previous post to help understand what follows in this post. The simulation code can be found at the following GitHub repository <b>(Insert link here)</b>.</p>
+<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows in this post. The simulation code can be found at the following GitHub repository <b>(Insert link here)</b>.</p>
+
+<p>
+<b>Aim of this article:</b>
+The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. For simplicity, throughout this article, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries. 
+</p>
 
 <p>In this post, a simple fix for this undesirable simultaneous control activation will be discussed under Section 1. Under that same section, the addition of the obstacle avoidance feature will be discussed along with a showcase of the corresponding simulation results.</p>
 
@@ -27,12 +32,12 @@ It is recommended that the reader should first go through the previous post to h
 <p>The software used for the simulations in this post are same as in the previous post and are listed below.</p>
 
 ### Software Used
-1. **[Python3](https://www.python.org/):** An open-source high-level interpreted programming language.
-2. **[NumPy](https://numpy.org/):** Numerical Python in short NumPy is an open-source scientific computational tool for multidimensional array operations. 
-3. **[Matplotlib](https://matplotlib.org/):** Is an open-source visualisation library for Python.
-4. **[CasADi](https://web.casadi.org/):** Is an open-source tool for nonlinear optimisation and algorithmic (automatic) differentiation. 
-5. **[Python-control](https://python-control.readthedocs.io/en/0.10.1/):** An open-source control systems library for Python.
-6. **[OpEn](https://alphaville.github.io/optimization-engine/):** Optimization Engine in full, is a framework for designing and solving non-linear and non-convex optimisation problems. 
+1. <b>[Python3](https://www.python.org/):</b> An open-source high-level interpreted programming language.
+2. <b>[NumPy](https://numpy.org/):</b> Numerical Python in short NumPy is an open-source scientific computational tool for multidimensional array operations. 
+3. <b>[Matplotlib](https://matplotlib.org/):</b> Is an open-source visualisation library for Python.
+4. <b>[CasADi](https://web.casadi.org/):</b> Is an open-source tool for nonlinear optimisation and algorithmic (automatic) differentiation. 
+5. <b>[Python-control](https://python-control.readthedocs.io/en/0.10.1/):</b> An open-source control systems library for Python.
+6. <b>[OpEn](https://alphaville.github.io/optimization-engine/):</b> Optimization Engine in full, is a framework for designing and solving non-linear and non-convex optimisation problems. 
 
 <p>Once again the notations from the previous post are reintroduced below.</p>
 
@@ -89,6 +94,14 @@ The obstacle avoidance feature shall be introduced in the form of additional con
 
 The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone in excluded, the calculated optimal path might end-up entering some part of the vehicle inside the safety circle (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, such ellipses are called as safety circles.
 </p>
+
+<p>
+The below figure shows a colour coded representation of the composition of a safety circle for a rectangular object. The object (in white) is first approximated into an object ellipse in blue. Then a green safety ellipse is layered on top of the object ellipse to account for the safety distance. Finally, the dark teal obstacle ellipse forms the final layer taking into account the vehicle size (its width).
+</p>
+
+<div>
+<img src="/safety_circle.svg" alt="FBD bicycle model -- NMPC" style="width: 550px; height: 450px; object-fit: cover;"/>
+</div>
 
 <p>
 
@@ -199,7 +212,7 @@ Absence of the buffer zone would mean that the calculated optimal path only prev
 It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the wright matrices $Q_1$ and $Q_2$, which will be done at a later point. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
 </p>
 
-## ఠ Section 2: Lane-keeping
+## ఠ Section 2: Lane-keeping (sort of)
 
 <p>
 
@@ -274,7 +287,7 @@ As it can be seen from the simulation results above, the vehicle successfully fo
 
 <p>
 
-Though, it seems like the trail of the vehicle never exits the track, this is only because the choice of the track dimensions and the look ahead $l = 120$ samples coincidentally leave enough time and space for the vehicle to trace an elliptical path of comparable dimensions. Had the dimensions of the track been a bit different or the look ahead been any larger, the vehicle could have exited the track. To prove this, the same simulation is repeated with $l = 200$ samples and the results are shown in the GIF below.
+Though, it seems like the trail of the vehicle never exits the track, this is only because the choice of the track dimensions and the look ahead $l = 120$ samples coincidentally leave enough time and space for the vehicle to trace an elliptical path of comparable dimensions to the actual track. Had the dimensions of the track been a bit different or the look ahead been any larger, the vehicle could have exited the track. To prove this, the same simulation is repeated with $l = 200$ samples and the results are shown in the GIF below.
 </p>
 
 <div>
@@ -301,15 +314,80 @@ Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to c
 
 <p>
 
-This finding is important for two reasons:
+This is not true lane-keeping but rather the first step towards it. True lane-keeping is achieved when the system actively puts effort to not exit the track. This will be discussed in the next section, but for now this finding is important for two reasons:
 1. Safety constraints must be explicit, meaning if it is not in the formulation, there is not guarantee that the NMPC controlled system will obey it.
-2. Safety must be a priority over reference tracking.
+2. Safety must take priority over reference tracking.
 </p>
 
-## ఠ Section 2: Lane-keeping + Obstacle Avoidance
+## ఠ Section 3: Lane-keeping + Obstacle Avoidance
 
+<p>
 
+In this section, the obstacle avoidance feature (constraint) will be combined with the lane-keeping feature to enable our NMPC controlled vehicle to navigate around obstacles on the track.
+</p>
 
+<p>
+
+In the previous section, it was observed that the NMPC controlled vehicle is tracking the dynamic reference, but is prone to exiting the road. The fix for this is addressed in this section because it is closely related to the formulation of the obstacle avoidance constraints. As seen in Section (1), given the right obstacle avoidance constraint formulation, the NMPC controlled vehicle avoids (entering) collision with the obstacle.
+</p>
+
+<p>
+
+What if the blue obstacle in the simulation results of Section (1) is not an obstacle, but a region in which the vehicle is prohibited to entre. Turns out, the formulation remains the same and the simulation results will also remain unaltered. This is because in the NMPC controller formulation, there is no mathematical difference between an obstacle avoidance constraint and a state constraint where the vehicle is prohibited to entre a circular (elliptical in this case) region. 
+</p>
+
+<p>
+
+Now, that translates to prohibiting the vehicle from entering the inner elliptical region of the track as follows:
+</p>
+
+<p>
+$$
+\begin{aligned}
+&\left(\frac{p_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 \gt 1 \\
+\implies &1 - \left(\frac{p_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 - \left(\frac{p_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 \lt 0,\ \forall k \in \Z_{[1, N]}
+\end{aligned}
+$$
+</p>
+
+<p>
+
+Here, $a_ i$ and $b_ i$ are the major and minor axis' radii of the inside edge of the track respectively. Similarly, for the exclusion of the outer region, the obstacle avoidance constraint can be reformulated as:
+</p>
+
+<p>
+$$
+\begin{aligned}
+&\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 \lt 1 \\
+\implies &\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 - 1 \lt 0,\ \forall k \in \Z_{[1, N]}
+\end{aligned}
+$$
+</p>
+
+<p>
+
+Here, $a_ o$ and $b_ o$ are the major and minor axis' radii of the outside edge of the track respectively.
+</p>
+
+<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the reintroduction of obstacle constraints below, features translated and/ or rotated elliptical constraints for the interested. While it is possible to extend this and make arbitrary paths by <em>stitching</em> parts of ellipses together, it is beyond the scope of this article.</p>
+
+<p>
+
+Before re-introducing the 
+</p>
+
+<p>
+$$
+\begin{aligned}
+&p'_{x, k} = p_{x, k} - c_ x, \\
+&p'_{y, k} = p_{y, k} - c_ y, \\
+&\tilde{p}_{x, k} = p'_{x, k}\cos(\theta) - p'_{y, k}\sin(\theta), \\
+&\tilde{p}_{y, k} = p'_{x, k}\sin(\theta) + p'_{y, k}\cos(\theta), \\
+&\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 \lt 1 \\
+\implies &\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 - 1 \lt 0,\ \forall k \in \Z_{[1, N]}
+\end{aligned}
+$$
+</p>
 
 ## References
 <p>
