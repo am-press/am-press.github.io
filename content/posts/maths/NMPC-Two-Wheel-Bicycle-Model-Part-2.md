@@ -209,7 +209,7 @@ Absence of the buffer zone would mean that the calculated optimal path only prev
 
 <p>
 
-It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the weight matrices $Q_1$ and $Q_2$, which will be done at a later point. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
+It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the weight matrices $Q_1$ and $Q_2$, which is left to the reader as an exercise. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
 </p>
 
 ## ఠ Section 2: Lane-keeping (sort of)
@@ -369,23 +369,89 @@ $$
 Here, $a_ o$ and $b_ o$ are the major and minor axis' radii of the outside edge of the track respectively.
 </p>
 
-<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the reintroduction of obstacle constraints below, features translated and/ or rotated elliptical constraints for the interested. While it is possible to extend this and make arbitrary paths by <em>stitching</em> parts of ellipses together, it is beyond the scope of this article.</p>
+<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the global origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the generalised reformulation of obstacle constraints below, features translated and rotated elliptical constraints for the interested. While it is possible to extend this and make arbitrary paths by <em>stitching</em> parts of ellipses together, it is beyond the scope of this article.</p>
 
 <p>
-
-Before re-introducing the 
+As an example, the track inner region exclusion constraints can be generalised as,
 </p>
 
 <p>
 $$
 \begin{aligned}
-&p'_{x, k} = p_{x, k} - c_ x, \\
-&p'_{y, k} = p_{y, k} - c_ y, \\
-&\tilde{p}_{x, k} = p'_{x, k}\cos(\theta) - p'_{y, k}\sin(\theta), \\
-&\tilde{p}_{y, k} = p'_{x, k}\sin(\theta) + p'_{y, k}\cos(\theta), \\
-&\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 \lt 1 \\
-\implies &\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 - 1 \lt 0,\ \forall k \in \Z_{[1, N]}
+&\tilde{p}_{x, k} = (p_{x, k} - c_ x)\cos(2\pi - \theta) - (p_{y, k} - c_ y)\sin(2\pi - \theta), \\
+&\tilde{p}_{y, k} = (p_{x, k} - c_ x)\sin(2\pi - \theta) + (p_{y, k} - c_ y)\cos(2\pi - \theta), \\
+&\left(\frac{\tilde{p}_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 \gt 1 \\
+\implies &\left(\frac{\tilde{p}_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 - 1 \gt 0,\ \forall k \in \Z_{[1, N]}
 \end{aligned}
+$$
+</p>
+
+<p>
+Where, $(p_{x, k}, p_{y, k})$ is the position of the vehicle's centre at $k^\text{th}$ step w.r.t. the global co-ordinate system, $(c_x, c_y)$ is the centre of the track also w.r.t. the global co-ordinate system, $\theta$ is the angle of the track's major axis made with the global x-axis measured in CCW direction, $(a_i, b_i)$ is the major and minor axis radii respectively, and $w_c$ is the width of the vehicle.
+</p>
+
+
+
+<p>
+For the purpose of this article, the simplified version of the track with its centre at global origin and major axis parallel to the global x-axis will be used for simulation. However, the generalisation above can be reformulated for obstacle avoidance with objects in motion. In particular we are interested in a formulation the guarantees Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>, pun intended) with objects in motion. To explain this, let us consider the following scenario,
+</p>
+
+<p>
+Imagine yourself driving a car on a typical high-way/ motor-way. At a basic level, while driving, you intend to keep the vehicle on the correct side of the road, avoid hitting obstacles, and reach your destination. Now, to avoid hitting obstacles, depending on your velocity, you need only keep check of vehicles and objects within a certain vicinity of your vehicle, say within a $20$ m radius. This means that, your decision now is less likely to be influenced by another vehicle that is more than $20$ m away from your vehicle and this likelihood quickly reaches zero the further the other vehicle is. Moreover, irrespective of the total number of vehicles on the road, you would only want to keep track of a limited number of vehicles within this vicinity. 
+</p>
+
+<p>
+Given that there are objects (stationary or moving) and vehicles (stationary or moving) with possibly different velocities than your's, the relative position of these vehicles and objects with you change over time. This also implies that objects and vehicles <em>come and go</em> into your vicinity. Say, as vehicle-a goes out of your vicinity some vehicle-b comes by, there is no point in tracking vehicle-a anymore and there is a need for tracking the newly arrived vehicle-b. This raises the necessity of dynamically dropping old objects of interest, the ones that are gone by, and track new objects of interest, the ones that have newly arrived into your vicinity. This <em>dynamic switching</em> between objects (<em>obstacles</em>) and actively avoiding them is <b>DOSA</b>. 
+</p>
+
+<p>
+In general, an autonomous car would be equipped with sensors to help with object tracking. These sensors work <em>similar</em> to how a person would track their <em>vicinity</em> (limited tracking space) for a <em>few objects</em> (limited obstacle count). Mathematically, it is straightforward to integrate the sensory data and include a few, say $5$, more obstacle avoidance constraints into the existing formulation to keep track of the said objects. In this regard, It would make sense to ask the following questions, 
+</p>
+
+1. what happens when the vehicle and the objects are moving at different/ same velocities?
+2. What if the formulation was set to track $5$ obstacles but only $3$ were present? Should such formulation still account for vehicles that are no longer in the vicinity of the vehicle? 
+3. Or even worse what if there are $6$ or $7$ objects in the vicinity?
+4. What about the numerical stability in all these cases?
+
+<p>
+Before introducing the reformulation, it is necessary to 
+</p>
+
+<p>
+Before answering these questions, let us introduce the special reformulation as, 
+</p>
+
+<p>
+$$
+\begin{aligned}
+&\tilde{p}_{x, k, j} = (p_{x, k} - c_ {x, j})\cos(2\pi - \theta_j) - (p_{y, k} - c_ {y, j})\sin(2\pi - \theta_j),\\
+&\tilde{p}_{y, k, j} = (p_{x, k} - c_ {x, j})\sin(2\pi - \theta_j) + (p_{y, k} - c_ {y, j})\cos(2\pi - \theta_j),\\
+&\left(\frac{\tilde{p}_{x, k, j}}{a_ j + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k, j}}{b_ j + \frac{w_c}{2}}\right)^2 \gt f(j) \\
+\implies &\left(\frac{\tilde{p}_{x, k, j}}{a_ j + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k, j}}{b_ j + \frac{w_c}{2}}\right)^2 - f(j) \gt 0,\ \forall k \in \Z_{[1, N]}, \text{ and } \forall j \in \Z_{[1, n_o]}.
+\end{aligned}
+$$
+</p>
+
+
+<p>
+Where, $(p_{x, k}, p_{y, k})$ is the position of the vehicle's centre at $k^\text{th}$ step w.r.t the global co-ordinate system, $(c_{x, j}, c_{y, j})$ is the centre of the $j^\text{th}$ obstacle <em>constraint</em> also w.r.t. the global co-ordinate system, $\theta_j$ is the angle of the $j^\text{th}$ obstacle <em>constraint's</em> major axis made with the global x-axis measured in CCW direction, $(a_j > 0$ and $b_j > 0)$ are the major and minor axis radii respectively of the $j^\text{th}$ obstacle <em>constraint</em>, $w_c$ is the width of the vehicle, $n_o$ is the total number of obstacle <em>constraints</em>, and $f(j)$ is the special function mentioned in the beginning of the article.
+</p>
+
+<p>
+<b>Note:</b> The reader should take a note of the emphasis on the word constraint in obstacle constraint above. The formulation is not an expression in reference to any particular obstacle, but is a generic constraint, which will be a part of the optimisation problem formulation. Meaning, the obstacle constraint parameters mentioned above are not fixed constants related to an obstacle (say vehicle-a), but will be changing dynamically as the algorithm does <b>DOSA</b>. For example, when vehicle-a goes away as vehicle-b comes by, the parameters of the $j^\text{th}$ obstacle constraint will be switching from constants that describe the centre, orientation and radii of vehicle-a to the corresponding constants that describe vehicle-b.
+</p>
+
+<p>
+The special function is defined as follows,
+</p>
+
+<p>
+$$
+f(j) = \left\{ 
+            \begin{array} {ll}
+            1 &\text{if object in vicinity}, \\ 
+            0 &\text{otherwise}. 
+            \end{array} \right.
 $$
 </p>
 
