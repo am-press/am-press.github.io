@@ -378,8 +378,8 @@ As an example, the track inner region exclusion constraints can be generalised a
 <p>
 $$
 \begin{aligned}
-&\tilde{p}_{x, k} = (p_{x, k} - c_ x)\cos(2\pi - \theta) - (p_{y, k} - c_ y)\sin(2\pi - \theta), \\
-&\tilde{p}_{y, k} = (p_{x, k} - c_ x)\sin(2\pi - \theta) + (p_{y, k} - c_ y)\cos(2\pi - \theta), \\
+&\tilde{p}_{x, k} = (p_{x, k} - c_ x)\cos(\theta) + (p_{y, k} - c_ y)\sin(\theta), \\
+&\tilde{p}_{y, k} = -(p_{x, k} - c_ x)\sin(\theta) + (p_{y, k} - c_ y)\cos(\theta), \\
 &\left(\frac{\tilde{p}_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 \gt 1 \\
 \implies &\left(\frac{\tilde{p}_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 - 1 \gt 0,\ \forall k \in \Z_{[1, N]}
 \end{aligned}
@@ -424,8 +424,8 @@ Before answering these questions, let us introduce the special reformulation as,
 <p>
 $$
 \begin{aligned}
-&\tilde{p}_{x, k, j} = (p_{x, k} - c_ {x, j})\cos(2\pi - \theta_j) - (p_{y, k} - c_ {y, j})\sin(2\pi - \theta_j),\\
-&\tilde{p}_{y, k, j} = (p_{x, k} - c_ {x, j})\sin(2\pi - \theta_j) + (p_{y, k} - c_ {y, j})\cos(2\pi - \theta_j),\\
+&\tilde{p}_{x, k, j} = (p_{x, k} - c_ {x, j})\cos(\theta_j) + (p_{y, k} - c_ {y, j})\sin(\theta_j),\\
+&\tilde{p}_{y, k, j} = -(p_{x, k} - c_ {x, j})\sin(\theta_j) + (p_{y, k} - c_ {y, j})\cos(\theta_j),\\
 &\left(\frac{\tilde{p}_{x, k, j}}{a_ j + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k, j}}{b_ j + \frac{w_c}{2}}\right)^2 \gt f(j) \\
 \implies &\left(\frac{\tilde{p}_{x, k, j}}{a_ j + \frac{w_c}{2}}\right)^2 + \left(\frac{\tilde{p}_{y, k, j}}{b_ j + \frac{w_c}{2}}\right)^2 - f(j) \gt 0,\ \forall k \in \Z_{[1, N]}, \text{ and } \forall j \in \Z_{[1, n_o]}.
 \end{aligned}
@@ -453,6 +453,14 @@ f(j) = \left\{
             0 &\text{otherwise}. 
             \end{array} \right.
 $$
+</p>
+
+<p>
+For the sake of simplicity, the idea of <em>vicinity</em> will be restricted to the range of a virtual sensor. The virtual sensor scans a few meters ahead of the vehicle and returns the aforementioned obstacle constraint parameters for $n_o$ number of constraints. For example, say that there are $3$ obstacles within the sensor range and $o_n = 4$, it would return the corresponding $(c_{x, j}, c_{y, j})$, $\theta_j$, $(a_j > 0$, $b_j > 0)$, and $f(j)=1$ for $j \in \{1, 2, 3\}$, and would return $(c_{x, j} = 0, c_{y, j} = 0)$, $\theta_j=0$, $(a_j = 1$ and $b_j = 1)$, and $f(j)=0$ for $j = 4$. 
+</p>
+
+<p>
+The first three constraints i.e., for $j \in \{1, 2, 3\}$, would work as any other obstacle avoidance constraint would, but the last constraint i.e., for $j=4$, setting $f(j)=0$ effectively removes the constraint and $(a_j = 1$ and $b_j = 1)$ ensures numerical stability by avoiding any division by zero errors (if they were to occur). This allows for dynamical switching between obstacles as these constraint parameters are updated for every simulation step. From here on, such a virtual sensor is referred to as obstacle sensor.
 </p>
 
 ## References
