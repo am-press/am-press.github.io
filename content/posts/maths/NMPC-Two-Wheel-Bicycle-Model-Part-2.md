@@ -414,10 +414,6 @@ In general, an autonomous car would be equipped with sensors to help with object
 4. What about the numerical stability in all these cases?
 
 <p>
-Before introducing the reformulation, it is necessary to 
-</p>
-
-<p>
 Before answering these questions, let us introduce the special reformulation as, 
 </p>
 
@@ -462,6 +458,22 @@ For the sake of simplicity, the idea of <em>vicinity</em> will be restricted to 
 <p>
 The first three constraints i.e., for $j \in \{1, 2, 3\}$, would work as any other obstacle avoidance constraint would, but the last constraint i.e., for $j=4$, setting $f(j)=0$ effectively removes the constraint and $(a_j = 1$ and $b_j = 1)$ ensures numerical stability by avoiding any division by zero errors (if they were to occur). This allows for dynamical switching between obstacles as these constraint parameters are updated for every simulation step. From here on, such a virtual sensor is referred to as obstacle sensor.
 </p>
+
+<p>
+<b>Caution:</b> Setting $f(j)$ to $0$ will still exclude the vehicle from entering the point $(c_{x, j}, c_{y, j})$. So, in addition to making $f(j)=0$, $(c_{x, j}, c_{y, j})$ should be changed to a point outside the track. Since the regions outside the track are excluded to begin with, fixing $(c_{x, j}, c_{y, j})$ outside the track makes little to no difference. For convenience it will be set to the origin, as it lies outside the track.
+</p>
+
+<p>
+<b>Note:</b>It should be noted that the above formulated constraints does not contain any information regarding the obstacles' velocities and accelerations. As the NMPC computes $N$ solutions, it <em>sees</em> these obstacles as stationary. It is only in the next iteration that the relative position of these obstacles are updated. So, in every iteration, only the first computed solution (out of $N$ control actions) is optimal because the obstacles' positions might evolve over the next $N-1$ computations. Since, the NMPC algorithm only utilises the first computed solution, the above method can still be used. Also, addressing this issue is beyond the scope of this article and is left to the curious as an exercise. 
+</p>
+
+<p>
+Addressing the questions posed before, although the above formulation guarantees <em>safety</em> with regards to collision prevention through obstacle avoidance, it is difficult to extend this <em>safety</em> for all possible relative velocities between the vehicle and the obstacles. In this regard, questions $1$ and $4$ require a more complex formulation and for the sake keeping things simple, they will remain unanswered. But, some form of numerical stability is still maintained because of the introduction of the special function. As for the questions $2$ and $3$, by the virtue of DOSA and the special function, the formulation gets some flexibility in terms of tackling an undisclosed number of obstacles, provided that the path is not completely blocked.
+</p>
+
+<p>With these changes we rewrite parts of our python code as follows, ***Insert Python3 code***</p>
+
+<p>Below are the simulation results ***provide simulation configuration***</p>
 
 ## References
 <p>
