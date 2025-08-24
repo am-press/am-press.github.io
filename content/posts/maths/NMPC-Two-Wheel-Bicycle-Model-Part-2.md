@@ -35,7 +35,7 @@ collapsible: true
 In Section 4, to add some <em>realism</em> to the simulation, a simple virtual sensor concept will be introduced to mimic the sensing mechanics of a real-world autonomous vehicle. The section ends with corresponding simulation results.</p>
 </p>
 
-<p>The post ends with Section 5, where a special function will be introduced to the reference generator algorithm that helps with real-time Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>, pun intended). The discussion then moves on to how this special function can help with avoiding obstacles in motion, and ends with the showcase of corresponding simulation results.</p>
+<p>The post ends with Section 5, where a special function will be introduced to the reference generator algorithm that helps with <em>simulation-time</em> Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>, pun intended). The discussion then moves on to how this special function can help with avoiding obstacles in motion, and ends with the showcase of corresponding simulation results.</p>
 
 ### Software Used
 <p>The software used for the simulations in this post are same as in the previous post and are listed below.</p>
@@ -235,13 +235,17 @@ It should also be noted that before $t<1$, there was a noticeable magnitude of $
 ## ఠ Section 2: Lane-keeping (sort of)
 
 <p>
-
-In order for the vehicle to follow a particular (desired) path, the reference position not only need to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference position at every instant.
+So far, we have seen how to get the vehicle to a desired position. In this section, we want to make the vehicle to keep traveling on a predetermined track without exiting. This introduces the need for dynamically switching between reference (desired) positions for two reasons, one is that a static reference will let the vehicle stall once reached, and the other is that we want the vehicle to travel (trace) any arbitrary path in general.
 </p>
 
 <p>
 
-This makes the vehicle (enabled by the NMPC controller) continuously chase after the changing reference. If the reference generator enables the changing reference to trace a desired path, this would, to some extent, guarantee that the vehicle also follows that particular path. One particular limitation of this <em>guarantee</em> will be evident from the simulation results of this section, emphasising on the importance of formulating proper constraints.
+So, for the vehicle to follow a desired path, the reference position not only need to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference position at every simulation instant (iteration).
+</p>
+
+<p>
+
+This makes the vehicle (enabled by the NMPC controller) continuously chase after the changing reference. If the reference generator enables the changing reference to trace the desired path, this would, to some extent, guarantee that the vehicle also follows that particular path. One particular limitation of this <em>guarantee</em> will be evident from the simulation results of this section, emphasising on the importance of formulating proper constraints.
 </p>
 
 <p>
@@ -258,7 +262,7 @@ Consider a path that is sampled into $s \in \N_{>0}$ equidistant (Euclidean dist
 
 <p>
 
-Let $p^\text{traj}_ {i_ p}$ be the projection of the current position of the vehicle $p^c = [p_x^c,\ p_y^c]^\mathsf{T}$ on to the sampled space. The goal is to find a reference position in this sampled space ($\bm{p}^\text{traj}$), that is $l \in \N_ {>0}$ points ahead of $p^\text{traj}_ {i_ p}$. Then the reference generator algorithm can be written as,
+Let $p^\text{traj}_ {i_ p}$ be the <em>projection</em> of the current position of the vehicle $p^c = [p_x^c,\ p_y^c]^\mathsf{T}$ on to the sampled space. The goal is to find a reference position in this sampled space ($\bm{p}^\text{traj}$), that is $l \in \N_ {>0}$ points ahead of $p^\text{traj}_ {i_ p}$. Then the reference generator algorithm can be written as,
 </p>
 
 <p>
@@ -276,7 +280,7 @@ Let $p^\text{traj}_ {i_ p}$ be the projection of the current position of the veh
 
 <p>
 
-This algorithm is implemented in Python3 with a elliptical track of width $w = 1$ m. The major axis radius of the centre of the track is equal to $a = 5$ m and the corresponding minor axis radius is equal to $b = 4.5$ m. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z=[5, 0]^\mathsf{T}$ and the realtime results are shown in the GIF below.
+This algorithm is implemented in Python3 with a elliptical track of width $w = 1$ m. The major axis radius of the centre of the track is equal to $a = 5$ m and the corresponding minor axis radius is equal to $b = 4.5$ m. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z=[5, 0]^\mathsf{T}$ and the simulation results are shown in the GIF below.
 </p>
 
 <div>
@@ -325,7 +329,7 @@ A slower version with reference and vehicle projections is shown in the GIF belo
 
 <p>
 
-Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference and it staying on the track was a coincidence. This is because, there is no constraint (<em>safety</em>) in the NMPC formulation that explicitly states that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
+Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference, and it staying on the track was a coincidence. This is because, there is no constraint (<em>safety</em>) in the NMPC formulation that explicitly states that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
 </p>
 
 <div>
