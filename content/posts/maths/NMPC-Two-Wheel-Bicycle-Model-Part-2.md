@@ -12,22 +12,30 @@ collapsible: true
 
 > <b>Previous post:</b> <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>.<br/>
 
-<p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller. 
-</p>
+<p><b>Background:</b><p>
+<p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller.</p>
 
 <p>
-<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows in this post. The simulation code can be found at the following GitHub repository <b>(Insert link here)</b>.</p>
+<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows here. The simulation code can be found at the following GitHub repository <b>(Insert link here)</b>.</p>
 
-<p>
-<b>Aim of this article:</b>
-The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. For simplicity, throughout this article, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries. 
-</p>
+### Aim of this article:
+<p>The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. To that end, to keep things simple, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries.</p>
 
-<p>In this post, a simple fix for the undesirable simultaneous activation of the control actions, acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$, will be discussed under Section 1. Under that same section, the addition of the obstacle avoidance feature will be discussed along with a showcase of the corresponding simulation results.</p>
+<p><b>Article structure:</b><p>
+<p>Similar to the previous post, I intend to divided this article in to several sections each featuring simpler feature additions to the previous, and slowly build up towards the end goal. Again, here, the Telugu letter ttha, <b>ఠ</b>, will be used at the beginning of a section to indicate the introduction of a <em>road safety</em> feature.</p>
+
+<p>Section $1$ of this post discusses a simple fix for the undesirable simultaneous activation of the control actions, the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$. The section also covers the addition of the obstacle avoidance feature along with a showcase of the corresponding simulation results.</p>
 
 <p>In Section 2, the discussion will be focused on the introduction of the lane-keeping feature by building upon a high-level reference generator algorithm. This reference generator algorithm is inspired by the work in [1]. After showcasing the corresponding simulation results, the section ends on an interesting note about the safety constraints.</p>
 
-<p>The post ends with Section 3, where the obstacle avoidance feature will be combined with lane-keeping. In this section a special function will be introduced to the reference generator algorithm that helps with real-time (dynamic) obstacle avoidance. The discussion then moves on to how this special function can help with avoiding obstacles in motion and ends with the showcase of corresponding simulation results.</p>
+<p>Under Section 3, the obstacle avoidance feature will be combined with the lane-keeping feature to produce an autonomous vehicle capable of navigating around known static obstacles whilst staying on a predetermined track. The section finishes with a showcase of the simulation results.
+</p>
+
+<p>
+In Section 4, to add some <em>realism</em> to the simulation, a simple virtual sensor concept will be introduced to mimic the sensing mechanics of a real-world autonomous vehicle. The section ends with corresponding simulation results.</p>
+</p>
+
+<p>The post ends with Section 5, where a special function will be introduced to the reference generator algorithm that helps with real-time Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>, pun intended). The discussion then moves on to how this special function can help with avoiding obstacles in motion, and ends with the showcase of corresponding simulation results.</p>
 
 <p>The software used for the simulations in this post are same as in the previous post and are listed below.</p>
 
@@ -58,9 +66,6 @@ The aim of this article is to demonstrate the abilities of an NMPC controlled ve
 |$\mathbb{S}_+^n$       |$\\{A\in \R^{n \times n}: x^\mathsf{T}Ax \ge 0 \ \forall \ x \in \R^n \\}$| Set of all symmetric positive semi-definite matrices.|
 |$\mathbb{S}_{++}^n$    |$\\{A \in \R^{n \times n}: x^\mathsf{T}Ax \gt 0 \text{ and } x^\mathsf{T}Ax = 0 \implies x = 0_n \ \forall \ x \in \R^n \\}$| Set of all symmetric positive definite matrices.|
 
-<p>
-
-Similar to the previous post the Telugu letter ttha, <b>ఠ</b>, will be used at the beginning of each section to indicate the introduction of a *road safety* feature.</p>
 
 ## ఠ Section 1: Obstacle avoidance
 
