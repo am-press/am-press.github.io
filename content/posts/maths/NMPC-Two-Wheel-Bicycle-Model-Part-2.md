@@ -21,7 +21,7 @@ collapsible: true
 ### Aim of this article:
 <p>The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. To that end, to keep things simple, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries.</p>
 
-<p><b>Article structure:</b><p>
+### Article structure:
 <p>Similar to the previous post, I intend to divided this article in to several sections each featuring simpler feature additions to the previous, and slowly build up towards the end goal. Again, here, the Telugu letter ttha, <b>ఠ</b>, will be used at the beginning of a section to indicate the introduction of a <em>road safety</em> feature.</p>
 
 <p>Section $1$ of this post discusses a simple fix for the undesirable simultaneous activation of the control actions, the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$. The section also covers the addition of the obstacle avoidance feature along with a showcase of the corresponding simulation results.</p>
@@ -37,9 +37,9 @@ In Section 4, to add some <em>realism</em> to the simulation, a simple virtual s
 
 <p>The post ends with Section 5, where a special function will be introduced to the reference generator algorithm that helps with real-time Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>, pun intended). The discussion then moves on to how this special function can help with avoiding obstacles in motion, and ends with the showcase of corresponding simulation results.</p>
 
+### Software Used
 <p>The software used for the simulations in this post are same as in the previous post and are listed below.</p>
 
-### Software Used
 1. <b>[Python3](https://www.python.org/):</b> An open-source high-level interpreted programming language.
 2. <b>[NumPy](https://numpy.org/):</b> Numerical Python in short NumPy is an open-source scientific computational tool for multidimensional array operations. 
 3. <b>[Matplotlib](https://matplotlib.org/):</b> Is an open-source visualisation library for Python.
@@ -47,9 +47,9 @@ In Section 4, to add some <em>realism</em> to the simulation, a simple virtual s
 5. <b>[Python-control](https://python-control.readthedocs.io/en/0.10.1/):</b> An open-source control systems library for Python.
 6. <b>[OpEn](https://alphaville.github.io/optimization-engine/):</b> Optimization Engine in full, is a framework for designing and solving non-linear and non-convex optimisation problems. 
 
-<p>Once again the notations from the previous post are reintroduced below.</p>
-
 ## Notation
+<p>Once again the notation from the previous post is reintroduced below.</p>
+
 | Symbol                | Expansion              | Comment                     |
 |--------               |-----------             |---------                    |
 |$0_{n \times m}$       | $[0]_{n \times m}$     | An $n \times m$ null matrix.|
@@ -71,11 +71,11 @@ In Section 4, to add some <em>realism</em> to the simulation, a simple virtual s
 
 <p>
 
-In this section, obstacle avoidance feature (*constraint*) will be added to the NMPC formulation. This feature is of importance for two reasons, first being that it extends the concept of *safety* for both the vehicle and the environment that it is navigating in. The obstacle could be a tree, another vehicle, or a human. Enabling such a feature prohibits the vehicle from injuring living beings and prevents self-damage when navigating around objects. The second reason being that this concept can be extended and reused when constraining the vehicle to stay on the track (road).
+In this section, obstacle avoidance feature (*constraint*) will be added to the NMPC formulation. This feature is of importance for two reasons, first being that it extends the concept of *safety* for both the vehicle and the environment that it is navigating in. The obstacle could be a tree, another vehicle, or a human. Enabling such a feature prohibits the vehicle from injuring living beings and prevents self-damage when navigating around objects. The second reason being that this concept can be extended and reused when constraining the vehicle to stay on a track (road).
 </p>
 
+<p><b>Part 1: <em>un-</em>Break Brakes</b></p>
 <p>
-
 Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The reason for not addressing this in Section 2 of the previous post is because, similar to obstacle avoidance, the fix has to do with modifying the formulation and not the dynamics as in Section 2 of the previous post. The simplest fix is to modify the cost function in the minimisation problem as follows,
 </p>
 
@@ -91,13 +91,41 @@ Where $R \gg 0$ and must be a very large number. This imposes that the best (*op
 </p>
 
 <p>
+In Python3, the modified stage cost function can be written as,
+</p>
 
-The obstacle avoidance feature shall be introduced in the form of additional constraints to the formulation. In general, it is easy to both design and implement ellipsoidal constraints, and for this reason, moving forward all obstacles will be approximated as either ellipses or circles with radii selected in such a way that guarantees *safety* (collision avoidance). For that, the radii shall address both the size of the obstacle plus some safe distance and a buffer zone that takes the size of the vehicle into account. 
+```python
+# Set a large value for R
+R = 1000000
+# Define the new stage cost to fix the undesired simultaneous actuation
+# of the acceleration and brake inputs by incurring a huge penalty.
+def stage_cost(u_current, u_prev):
+    return (u_current.T - u_prev.T) @ Q2 @ (u_current - u_prev)\
+            + R * u_current[0] * u_current[2]  # Fix
+```
+
+<p>
+With this modified stage cost function, the corresponding simulations results starting from $z = 0_{n_x \times 1}$, the modified system is simulated in Python3 with $N=50,\ S = 300,\ T=0.01, \text{ and } p^d = [5, 5]^\mathsf{T}$ and the results are shown in the following GIF.
+</p>
+
+<div>
+<img src="/mpc_car_st_slope_with_brake_constraint.gif" alt="Simulation results" width="640" height="400">
+</div>
+
+<p>
+As it can be seen from the above GIF, given the same simulation setting as in Section 2 of previous post, the NMPC controller has avoided the simultaneous activation of $\tilde{d}$ and $\tilde{b}$. 
+</p>
+
+<p><b>Part 2: Obstacle tackle</b></p>
+<p>
+The task of avoiding obstacles (and collision avoidance) can be alternatively viewed as prohibiting (excluding) the vehicle from reaching (entering) certain regions (positions) of space. Mathematically, this is very similar to constraining the vehicle's velocity i.e., prohibiting the vehicle from reaching certain velocities. In this regard, the obstacle avoidance feature shall be introduced in the form of additional constraints to the formulation.</p> 
+
+<p>In general, it is easy to both design and implement ellipsoidal constraints, and for this reason, moving forward all obstacles will be approximated as either ellipses or circles with radii selected in such a way that guarantees <em>safety</em> (collision avoidance). For that, the radii shall address both the size of the obstacle plus some safe distance and a buffer zone that takes the size of the vehicle into account. 
 </p>
 
 <p>
 
-The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone in excluded, the calculated optimal path might end-up pushing some part of the vehicle into the safety circle (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, although inaccurate, such ellipses are called as safety circles.
+The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone is excluded, the calculated optimal path might end-up pushing some part of the vehicle into the prohibited region (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, although inaccurate, such ellipses are called as safety circles.
 </p>
 
 <p>
@@ -110,7 +138,7 @@ The below figure shows a colour coded representation of the composition of a saf
 
 <p>
 
-For demonstration, an obstacle is placed with its centre at the origin with the radius of its safety circle equal to $2 + \frac{w_c}{2}$ mts, where $w_c = 0.25$ mts is the width of the car. The corresponding obstacle avoidance constraint can be formulated as follows,
+For demonstration, an obstacle is placed with its centre at the origin and the radius of its safety circle set to $2 + \frac{w_c}{2}$ mts, where $w_c = 0.25$ mts is the width of the car. The corresponding obstacle avoidance constraint can be formulated as follows,
 </p>
 
 <p>
@@ -124,7 +152,7 @@ $$
 
 <p>
 
-Needless to mention that it should be ensured that $p^2_{x, 0} + p^2_{y, 0} \gt (2 + \frac{w_c}{2})^2$ i.e., the system (vehicle) does not start from a position inside the safety circle. With these changes, the modified NMPC formulation can be re-written as follows,
+Needless to mention that it should be ensured that $p^2_{x, 0} + p^2_{y, 0} \gt (2 + \frac{w_c}{2})^2$ i.e., the system (vehicle) does not start from a position within the safety circle. With these changes, the modified NMPC formulation can be re-written as follows,
 </p>
 
 <p>
@@ -143,20 +171,7 @@ $$
 
 <p>
 
-Here, $Q_ 1 \in \mathbb{S}^{2}_ {++}$ and $Q_ 2 \in \mathbb{S}^{n_ u}_ {++}$. In Python3, the modified stage cost function can be written as,
-</p>
-
-```python
-# Set a large value for R
-R = 1000000
-# Define the new stage cost to fix the undesired simultaneous actuation
-# of the acceleration and brake inputs by incurring a huge penalty.
-def stage_cost(u_current, u_prev):
-    return (u_current.T - u_prev.T) @ Q2 @ (u_current - u_prev)\
-            + R * u_current[0] * u_current[2]  # Fix
-```
-
-<p>The modified formulation of on the NMPC in Python3 can be done as follows,</p>
+Here, $Q_ 1 \in \mathbb{S}^{2}_ {++}$ and $Q_ 2 \in \mathbb{S}^{n_ u}_ {++}$. The modified formulation of on the NMPC in Python3 can be done as follows,</p>
 
 ```python
 penality_constraint_position = 0
@@ -204,7 +219,7 @@ The simulation results of this formulation with $N=50,\ S = 300,\ T=0.01$ s, $R 
 
 <p>
 
-From the above GIF, it can be seen that the NMPC controlled vehicle is indeed avoiding the obstacle and reaching close to the destination. It must be observed that before $t=1.5$, the vehicle drove close (tangential) to the safety circle because that is an optimal path that minimises the above formulated cost function. This is the reason why the radii (radius in this case) must include a buffer zone around the actual object. This ensures that the vehicle never comes *dangerously* close to the actual object. 
+From the above GIF, it can be seen that the NMPC controlled vehicle is indeed avoiding the obstacle and reaching close to the destination. It must be observed that, before $t=1.5$, the vehicle drives very close (tangential) to the safety circle. This is because, it is an optimal path that minimises the above formulated cost function. This is the reason why the radii (radius in this case) must include a buffer zone around the actual object. This ensures that the vehicle never comes <em>dangerously</em> close to the actual object. 
 </p>
 
 <p>
@@ -214,7 +229,7 @@ Absence of the buffer zone would mean that the calculated optimal path only prev
 
 <p>
 
-It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could probably be the case that the vehicle is drifting, which is undesirable when it comes to *road safety*. However, this can simply be fixed by tuning the weight matrices $Q_1$ and $Q_2$, which is left to the reader as an exercise. But, for Section 2 (the next section), the goal is to have the NMPC drive on a predetermined track without exiting.
+It should also be noted that before $t<1$, there was a noticeable magnitude of $v_y$. This could mean that the vehicle is drifting, which is undesirable when it comes to <em>road safety</em>. However, this can simply be fixed by adding another velocity constraint on $v_y$, which is left to the reader as an exercise. But, for Section 2, the goal is to have the NMPC drive on a predetermined track without exiting.
 </p>
 
 ## ఠ Section 2: Lane-keeping (sort of)
