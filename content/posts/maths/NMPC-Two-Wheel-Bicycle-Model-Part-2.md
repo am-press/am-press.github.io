@@ -284,7 +284,7 @@ This algorithm is implemented in Python3 with a elliptical track of width $w = 1
 </p>
 
 <div>
-<img src="/track_drive_higer_resolution_track.gif" alt="Simulation results: with track sampling = 40 samples/m and 120 samples look ahead." width="640" height="400">
+<img src="/track_drive_higher_resolution_track.gif" alt="Simulation results: with track sampling = 40 samples/m and 120 samples look ahead." width="640" height="400">
 </div>
 
 <p>
@@ -297,7 +297,7 @@ In the GIF above, the black path represents the elliptical track and yellow curv
 For further clarity, a white dot representing the projection of the current position of the vehicle on to the centre lane ($p^\text{traj}_ {i_ p}$) and a red dot representing the generated reference position $p^d$ are added to the plot.</p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_with_ref.gif" alt="Simulation results: A slowed version of the simulation results with track sampling = 40 samples/m and 120 samples look ahead." width="640" height="400">
+<img src="/track_drive_higher_resolution_track_with_ref.gif" alt="Simulation results: A slowed version of the simulation results with track sampling = 40 samples/m and 120 samples look ahead." width="640" height="400">
 </div>
 
 <p>
@@ -306,7 +306,7 @@ As it can be seen from the simulation results above, the vehicle successfully fo
 </p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_with_ref_trail.gif" alt="Simulation results: with vehicle trail in blue." width="640" height="400">
+<img src="/track_drive_higher_resolution_track_with_ref_trail.gif" alt="Simulation results: with vehicle trail in blue." width="640" height="400">
 </div>
 
 <p>
@@ -315,7 +315,7 @@ Though, it seems like the trail of the vehicle never exits the track, this is on
 </p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_distant_destination.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+<img src="/track_drive_higher_resolution_track_distant_destination.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
 </div>
 
 <p>
@@ -324,7 +324,7 @@ A slower version with reference and vehicle projections is shown in the GIF belo
 </p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_distant_destination_with_ref.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+<img src="/track_drive_higher_resolution_track_distant_destination_with_ref.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
 </div>
 
 <p>
@@ -333,7 +333,7 @@ Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to c
 </p>
 
 <div>
-<img src="/track_drive_higer_resolution_track_distant_destination_with_ref_trail.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+<img src="/track_drive_higher_resolution_track_distant_destination_with_ref_trail.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
 </div>
 
 <p>
