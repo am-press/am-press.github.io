@@ -347,17 +347,17 @@ This is not true lane-keeping but rather the first step towards it. True lane-ke
 
 <p>
 
-In this section, the obstacle avoidance feature (constraint) will be combined with the lane-keeping feature to enable our NMPC controlled vehicle to navigate around obstacles on the track.
+In this section, the obstacle avoidance feature will be combined with the lane-keeping feature to enable our NMPC controlled vehicle to navigate around know static obstacles on a predetermined track.
 </p>
 
 <p>
 
-In the previous section, it was observed that the NMPC controlled vehicle is tracking the dynamic reference, but is prone to exiting the road. The fix for this is addressed in this section because it is closely related to the formulation of the obstacle avoidance constraints. As seen in Section (1), given the right obstacle avoidance constraint formulation, the NMPC controlled vehicle avoids (entering) collision with the obstacle.
+In the previous section, it was observed that the NMPC controlled vehicle is successfully tracking the dynamic reference, but is prone to exiting the road. The fix for it will addressed in this section because it is closely related to the formulation of the obstacle avoidance constraints. As seen in Section 1, given the right obstacle avoidance constraint, the NMPC controlled vehicle avoids (entering) collision with the obstacle.
 </p>
 
 <p>
 
-What if the blue obstacle in the simulation results of Section (1) is not an obstacle, but a region in which the vehicle is prohibited to entre. Turns out, the formulation remains the same and the simulation results will also remain unaltered. This is because in the NMPC controller formulation, there is no mathematical difference between an obstacle avoidance constraint and a state constraint where the vehicle is prohibited to entre a circular (elliptical in this case) region. 
+What if the blue obstacle in the simulation results of Section 1 is not an obstacle, but a region in which the vehicle is prohibited to entre. Turns out, the formulation remains the same and the simulation results will also remain unaltered. This is because in the NMPC controller formulation, there is no mathematical difference between an obstacle avoidance constraint and a state constraint where the vehicle is prohibited to entre a circular (elliptical in this case) region. 
 </p>
 
 <p>
@@ -393,7 +393,7 @@ $$
 Here, $a_ o$ and $b_ o$ are the major and minor axis' radii of the outside edge of the track respectively.
 </p>
 
-<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the global origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the generalised reformulation of obstacle constraints below, features translated and rotated elliptical constraints for the interested. While it is possible to extend this and make arbitrary paths by <em>stitching</em> parts of ellipses together, it is beyond the scope of this article.</p>
+<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the global origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the generalised reformulation of obstacle constraints below, features translated and rotated elliptical constraints for the interested. While it is possible to extend this and make arbitrary paths by <em>switching</em> between different ellipses (something similar to <b>DOSA</b>, see Section 5), it is beyond the scope of this article.</p>
 
 <p>
 As an example, the track inner region exclusion constraints can be generalised as,
@@ -417,7 +417,135 @@ Where, $(p_{x, k}, p_{y, k})$ is the position of the vehicle's centre at $k^\tex
 
 
 <p>
-For the purpose of this article, the simplified version of the track with its centre at global origin and major axis parallel to the global x-axis will be used for simulation. However, the generalisation above can be reformulated for obstacle avoidance with objects in motion. In particular we are interested in a formulation the guarantees Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>, pun intended) with objects in motion. To explain this, let us consider the following scenario,
+For the purpose of this article, the simplified version of the track with its centre at global origin and major axis parallel to the global x-axis will be used for simulation. However, the generalisation above will be reused later for obstacle avoidance with objects in motion. The NMPC formulation will now take the following form,
+</p>
+
+<p>
+$$
+\begin{aligned}
+\mathbb{P}_ N(z, u^\star_ {\text{p}}) :\ &\underset{\bm{u}_ N}{\text{minimise}}\ \|p_ N - p^d\|_ {Q_ {1}}^2 + \sum_ {k=0}^{N-1} \left( \|u_ k - u_ {k-1}\|_ {Q_ 2}^2 + R \cdot \tilde{d}_k \cdot \tilde{b}_k \right) \\
+\text{s.t.}\ & z = z^\star_ {\text{p}}, \\
+\ &u_ {-1} = u^\star_ {\text{p}}, \\
+\ &z_ {k+1} = \mathbf{g}(z_ k, u_ k),\ k \in \N_ {[0, N-1]}, \\
+\ &u_ k \in \mathbf{U},\ k \in \N_ {[0, N-1]}, \\
+\ &v_ {x, k} \in \bm{\Gamma},\ k \in \N_ {[0, N-1]}, \\
+\ &1 - \left(\frac{p_{x, k}}{a_ i + \frac{w_c}{2}}\right)^2 - \left(\frac{p_{y, k}}{b_ i + \frac{w_c}{2}}\right)^2 \lt 0,\ \forall k \in \Z_{[1, N]}, \text{ and} \\
+\ &\left(\frac{p_{x, k}}{a_ o + \frac{w_c}{2}}\right)^2 + \left(\frac{p_{y, k}}{b_ o + \frac{w_c}{2}}\right)^2 - 1 \lt 0,\ \forall k \in \Z_{[1, N]}.
+\end{aligned}
+$$
+</p>
+
+<p>
+The above changes in the NMPC formulation can be realised in existing Python3 code as follows,
+</p>
+
+```Python
+nz = 6
+nu = 3
+N = 50
+
+zmin = [-100, -100, -np.inf, 0, 0, -np.inf]
+zmax = [100, 100, np.inf, 5, 5, np.inf]
+umin_seq = [0, -np.pi/3, 0] * N
+umax_seq = [1, np.pi/3, 1] * N
+
+Q1 = np.diagflat([10000, 10000, 0, 0, 0, 0])
+Q2 = np.diagflat([10, 10, 10])
+R = 1000000
+
+u_seq = cs.SX.sym("u_seq", N * nu, 1)
+problem_params = cs.SX.sym("problem_params", 2*nz + 2*nu, 1)
+z_0 = problem_params[ : nz]
+z_ref = problem_params[nz : 2 * nz]
+u_ref = problem_params[2 * nz : 2 * nz + nu]  # currently un-used
+u_prev = problem_params[2 * nz + nu : 2 * nz + 2 * nu]  # u_{-1} value of inputs before t=0
+obstacles_functions = []
+obstacle_params = [0]*num_simultaneous_obstacles_to_track
+def obstacle_function(x, y, obstacle_param):
+    X_ = (x - obstacle_param[0])
+    Y_ = (y - obstacle_param[1])
+    a = obstacle_param[2]
+    b = obstacle_param[3]
+    theta = 2*cs.pi - obstacle_param[4]
+    is_present = obstacle_param[5]
+
+    X = (X_ * cs.cos(theta) - Y_ * cs.sin(theta)) / a
+    Y = (X_ * cs.sin(theta) + Y_ * cs.cos(theta)) / b
+
+    return cs.fmax(0, is_present - X ** 2 - Y ** 2)
+
+for i in range(num_simultaneous_obstacles_to_track):
+    obstacle_params[i] = problem_params[2*(nz + nu) + num_data_params_per_obstacle*i:2*(nz + nu) + num_data_params_per_obstacle*(i+1)]
+    obstacles_functions.append(partial(obstacle_function, obstacle_param=obstacle_params[i]))
+
+z_t = z_0
+
+def stage_cost(u_current, u_prev):
+    return (u_current.T - u_prev.T) @ R @ (u_current - u_prev) + R * u_current[0] * u_current[2]
+
+def terminal_cost(z):
+    return (z.T - z_ref.T) @ Q @ (z - z_ref)
+
+total_cost = 0
+penality_constraint_position = 0
+penality_constraint_obstacles = 0
+penality_constraint_tracks = 0
+penality_constraint_vx = 0
+penality_constraint_vy = 0
+
+for t in range(N):
+    u_current = u_seq[t * nu : (t + 1) * nu]
+    total_cost += stage_cost(u_current, u_prev)
+    z_t = bm.dynamics_cs(z_t, u_current)
+    u_prev = u_current
+    penality_constraint_position += cs.fmax(0, (2 + bm.car_width / 2)**2 - z_t[0]**2 - z_t[1]**2)
+    penality_constraint_vx += cs.fmax(0, cs.norm_1(z_t[3]) - zmax[3])
+    penality_constraint_vx += cs.norm_1(cs.fmin(zmin[3], z_t[3]))
+    for obstacle_function in obstacles_functions:
+        penality_constraint_obstacles += obstacle_function(z_t[0], z_t[1])
+    penality_constraint_tracks += cs.fmax(0, 1 - (z_t[0]/(5 + .25))**2 - (z_t[1]/(4+.25))**2)
+    penality_constraint_tracks += cs.fmax(0, (z_t[0]/(6-.25))**2 + (z_t[1]/(5-.25))**2 - 1)
+
+
+total_cost += terminal_cost(z_t)
+
+U = og.constraints.Rectangle(umin_seq, umax_seq)
+
+problem = og.builder.Problem(u_seq, problem_params, total_cost)
+problem = problem.with_constraints(U)
+problem = problem.with_penalty_constraints(penality_constraint_position 
+                                           + penality_constraint_vx + penality_constraint_vy 
+                                           + penality_constraint_obstacles + penality_constraint_tracks)
+
+build_config = og.config.BuildConfiguration() \
+    .with_build_directory("optimizer") \
+    .with_tcp_interface_config()
+
+meta = og.config.OptimizerMeta().with_optimizer_name("bicycle_model")
+
+solver_config = og.config.SolverConfiguration()\
+    .with_tolerance(1e-4)\
+    .with_penalty_weight_update_factor(3)
+
+builder = []
+builder = og.builder.OpEnOptimizerBuilder(problem, meta,
+                                          build_config, solver_config).with_verbosity_level(0)
+
+builder.build()
+```
+
+<div>
+<img src="/track_drive_multiple_obs_no_disappear.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+</div>
+
+## Section 4: Virtual sensor
+<div>
+<img src="/track_drive_multiple_obs_disappear.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+</div>
+
+## Section 5: DOSA (very healthy if prepared right)
+
+<p>In particular we are interested in a formulation the guarantees Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>) with objects in motion. To explain this, let us consider the following scenario,
 </p>
 
 <p>
