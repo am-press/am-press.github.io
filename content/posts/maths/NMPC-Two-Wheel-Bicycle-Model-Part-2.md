@@ -76,7 +76,7 @@ In this section, obstacle avoidance feature (*constraint*) will be added to the 
 
 <p><b>Part 1: <em>un-</em>Break Brakes</b></p>
 <p>
-Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The reason for not addressing this in Section 2 of the previous post is because, similar to obstacle avoidance, the fix has to do with modifying the formulation and not the dynamics as in Section 2 of the previous post. The simplest fix is to modify the cost function in the minimisation problem as follows,
+Before introducing this feature, the fix for simultaneous activation of $\tilde{d}$ and $\tilde{b}$ should be addressed. The reason for not addressing this in Section 2 of the previous post is because, similar to obstacle avoidance, the fix has to do with modifying the NMPC formulation and not the vehicle dynamics as in Section 2 of the previous post. The simplest fix is to modify the cost function in the minimisation problem as follows,
 </p>
 
 <p>
@@ -105,7 +105,7 @@ def stage_cost(u_current, u_prev):
 ```
 
 <p>
-With this modified stage cost function, the corresponding simulations results starting from $z = 0_{n_x \times 1}$, the modified system is simulated in Python3 with $N=50,\ S = 300,\ T=0.01, \text{ and } p^d = [5, 5]^\mathsf{T}$ and the results are shown in the following GIF.
+With this modified stage cost function, the corresponding modified system is simulated in Python3, starting from $z = 0_{n_x \times 1}$, with $N=50,\ S = 300,\ T=0.01, \text{ and } p^d = [5, 5]^\mathsf{T}$. The corresponding results are shown in the following GIF.
 </p>
 
 <div>
@@ -125,7 +125,7 @@ The task of avoiding obstacles (and collision avoidance) can be alternatively vi
 
 <p>
 
-The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone is excluded, the calculated optimal path might end-up pushing some part of the vehicle into the prohibited region (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of the ellipse. From here on, although inaccurate, such ellipses are called as safety circles.
+The buffer zone is needed because the position dynamics of the car are calculated for the center of gravity $(C_g)$ of the vehicle. This means, if the buffer zone is excluded, the calculated optimal path might end-up pushing some part of the vehicle into the prohibited region (further clarification provided after presenting the simulation results). It is also to be ensured that the geometric centre of the object coincides with the centre of its own ellipse. From here on, although inaccurate, such ellipses are called as safety circles.
 </p>
 
 <p>
@@ -224,7 +224,7 @@ From the above GIF, it can be seen that the NMPC controlled vehicle is indeed av
 
 <p>
 
-Absence of the buffer zone would mean that the calculated optimal path only prevents the $(C_g)$ of the vehicle from entering the blue circle. This makes the rest of the vehicle free to enter (<em>collide</em>) with the object.
+Absence of the buffer zone would mean that the calculated optimal path only prevents the point $C_g$ of the vehicle from entering the blue circle. This makes the rest of the vehicle free to enter (<em>collide</em>) with the object.
 </p>
 
 <p>
@@ -240,7 +240,7 @@ So far, we have seen how to get the vehicle to a desired position. In this secti
 
 <p>
 
-So, for the vehicle to follow a desired path, the reference position not only need to keep changing but also should follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference position at every simulation instant (iteration).
+So, for the vehicle to follow a desired path, the reference position not only need to keep changing but also follow the desired path. The change of reference position should be systematic and deterministic, for such, a higher-level reference generator algorithm needs to be introduced. This reference generator sits one level above the NMPC controller, thus higher-level, and generates (changes the old reference) a new reference position at every simulation instant (iteration).
 </p>
 
 <p>
@@ -272,14 +272,14 @@ Let $p^\text{traj}_ {i_ p}$ be the <em>projection</em> of the current position o
 1. Sample the desired trajectory into an ordered collection of equidistant position points as: $\bm{p}^\text{traj}$.
 2. Project the current position of the vehicle on to $\bm{p}^ \text{traj}$ and find the corresponding index as: $i_ p = \text{min}\left\\{\underset{i}{\text{argmin}} \\|p^c - p^\text{traj}_ i\\|^2 \right\\}$.
 3. With $p^\text{traj}_ {i_ p}$ being the closest point to the vehicle on the trajectory, find a reference position that is $l$ points ahead as: $p^d = p^\text{traj}_ {i_ p + l} = \bm{p}^\text{traj}[i_ p + l]$.
-4. Set $p^d$ as the new reference the of NMPC controller and run the simulation for one iteration.
+4. Set $p^d$ as the new reference of the NMPC controller and run the simulation for one iteration.
 5. repeat steps $2$ to $4$ till the end of the simulation.
 </p>
 
 <p><b>Note:</b> This approach for finding $i_ p$ is naive, in that the reference generator can be easily fooled to generate a reference position that is either too far ahead or (too far) behind the current vehicle position. In simple terms, this reference generator approach cannot guarantee the robustness of the NMPC controlled system for any arbitrary path. It is a good exercise for the reader to experiment and see why this is true. Addressing this issue is beyond the scope of this article and the reader is encouraged to do their own research.</p>
 
 <p>
-Due to the increased complexity, the implementation of this algorithm and the rest of the code is divided in to three classes in Python3 as follows,
+Due to the increased complexity, the implementation of this algorithm and the rest of the simulation code is divided in to three classes in Python3 as follows,
 </p>
 
 <ol> 
@@ -325,7 +325,7 @@ Due to the increased complexity, the implementation of this algorithm and the re
         <li>Implements (<em>Spoiler Alert!!!</em>):</li>
             <ul>
                 <li>Track generation for both simulation and visualisation purposes.</li> 
-                <li>For simulation, it generates elliptical tracks of required size and samples the track boundaries and centre in to desired number of samples.</li> 
+                <li>For simulation, it generates elliptical tracks of required size and samples the track boundaries (edges) and  the centre of the track in to desired number of samples.</li> 
                 <li>For track visualisation, it generates <code>matplotlib</code> elliptical patches.</li> 
                 <li>It is also used for generating elliptical obstacle boundaries (<em>safety circles</em>).</li>
             </ul>
@@ -353,7 +353,7 @@ Due to the increased complexity, the implementation of this algorithm and the re
 </ol>
 
 <p>
-<b>Note:</b> From here on, the Python3 implementation code snippets for the simulation side of the code is not presented in order to avoid clumsy presentation. Instead the reader is requested to visit this ***insert github link*** GitHub repository.
+<b>Note:</b> From here on, the Python3 implementation code snippets for the simulation side of the code are not presented in order to avoid clumsy presentation. Instead the reader is requested to visit this ***insert github link*** GitHub repository.
 </p>
 
 <p>
@@ -411,7 +411,7 @@ A slower version with reference and vehicle projections is shown in the GIF belo
 
 <p>
 
-Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference, and it staying on the track was a coincidence. This is because, there is no constraint (<em>safety</em>) in the NMPC formulation that explicitly states that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
+Now, it can be clearly seen that the NMPC controlled vehicle is only aiming to catch up to the reference, and it staying on the track was a coincidence. This is because, there is no constraint (<em>safety</em>) in the NMPC formulation to explicitly state that the vehicle must stay on the track. The same simulation with the vehicle trail is presented below.
 </p>
 
 <div>
@@ -475,7 +475,7 @@ $$
 Here, $a_ o$ and $b_ o$ are the major and minor axis' radii of the outside edge of the track respectively.
 </p>
 
-<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the global origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the generalised reformulation of obstacle constraints below, features translated and rotated elliptical constraints for the interested. While it is possible to extend this and make arbitrary paths by <em>switching</em> between different ellipses (something similar to <b>DOSA</b>, see Section 5), it is beyond the scope of this article.</p>
+<p><b>Note:</b> For simplicity, the road tracks demonstrated in this article are assumed to have their centres coincide with the global origin, their major axis parallel to the global x-axis, and their minor axis parallel to the global y-axis. Nonetheless, the generalised reformulation of obstacle constraint presented below, features translated and rotated elliptical constraint for the interested. While it is possible to extend this and make arbitrary paths by <em>switching</em> between different ellipses (something similar to <b>DOSA</b>, see Section 5), it is beyond the scope of this article.</p>
 
 <p>
 As an example, the track inner region exclusion constraints can be generalised as,
@@ -664,11 +664,11 @@ $$
 
 
 <p>
-Where, $(p_{x, k}, p_{y, k})$ is the position of the vehicle's centre at $k^\text{th}$ step w.r.t the global co-ordinate system, $(c_{x, j}, c_{y, j})$ is the centre of the $j^\text{th}$ obstacle <em>constraint</em> also w.r.t. the global co-ordinate system, $\theta_j$ is the angle of the $j^\text{th}$ obstacle <em>constraint's</em> major axis made with the global x-axis measured in CCW direction, $(a_j > 0$ and $b_j > 0)$ are the major and minor axis radii respectively of the $j^\text{th}$ obstacle <em>constraint</em>, $w_c$ is the width of the vehicle, $n_o$ is the total number of obstacle <em>constraints</em>, and $f(j)$ is the special function mentioned in the beginning of the article.
+Where, $(p_{x, k}, p_{y, k})$ is the position of the vehicle's centre at $k^\text{th}$ step w.r.t the global co-ordinate system, $(c_{x, j}, c_{y, j})$ is the centre of the $j^\text{th}$ obstacle (<em>constraint</em>) also w.r.t. the global co-ordinate system, $\theta_j$ is the angle of the $j^\text{th}$ obstacle's (<em>constraint's</em>) major axis made with the global x-axis measured in CCW direction, $(a_j > 0$ and $b_j > 0)$ are the major and minor axis radii respectively of the $j^\text{th}$ obstacle (<em>constraint</em>), $w_c$ is the width of the vehicle, $n_o$ is the total number of obstacles (<em>constraints</em>), and $f(j)$ is the special function mentioned in the beginning of the article.
 </p>
 
 <p>
-<b>Note:</b> The reader should take a note of the emphasis on the word constraint in obstacle constraint above. The formulation is not an expression in reference to any particular obstacle, but is a generic constraint, which will be a part of the optimisation problem formulation. Meaning, the obstacle constraint parameters mentioned above are not fixed constants related to an obstacle (say vehicle-a), but will be changing dynamically as the algorithm does <b>DOSA</b>. For example, when vehicle-a goes away as vehicle-b comes by, the parameters of the $j^\text{th}$ obstacle constraint will be switching from constants that describe the centre, orientation and radii of vehicle-a to the corresponding constants that describe vehicle-b.
+<b>Note:</b> The reader should take a note of the emphasis on the word constraint in obstacle constraint above. The formulation is not an expression in reference to any particular obstacle, but is a generic constraint, which will be a part of the optimisation problem formulation. Meaning, the obstacle constraint parameters mentioned above are not fixed constants related to an obstacle (say vehicle-a), but will be changing dynamically as the algorithm does <b>DOSA</b>. For example, when vehicle-a goes away as vehicle-b comes by, the parameters of the $j^\text{th}$ obstacle constraint will be switching from constants that describe the centre, orientation and radii of vehicle-a to the corresponding constants that describe vehicle-b. This is in contrast to what was done in Section 3, where the obstacles are static, and their positions, shapes and orientations are know (fixed) beforehand. 
 </p>
 
 <p>
@@ -686,7 +686,7 @@ $$
 </p>
 
 <p>
-For the sake of simplicity, the idea of <em>vicinity</em> will be restricted to the range of a virtual sensor. The virtual sensor scans a few meters ahead of the vehicle and returns the aforementioned obstacle constraint parameters for $n_o$ number of constraints. For example, say that there are $3$ obstacles within the sensor range and $o_n = 4$, it would return the corresponding $(c_{x, j}, c_{y, j})$, $\theta_j$, $(a_j > 0$, $b_j > 0)$, and $f(j)=1$ for $j \in \{1, 2, 3\}$, and would return $(c_{x, j} = 0, c_{y, j} = 0)$, $\theta_j=0$, $(a_j = 1$ and $b_j = 1)$, and $f(j)=0$ for $j = 4$. 
+For the sake of simplicity, the idea of <em>vicinity</em> will be restricted to the range of a virtual sensor. The virtual sensor scans a few meters ahead of the vehicle and returns the aforementioned obstacle constraint parameters for $n_o$ number of constraints. For example, say that there are $3$ obstacles within the sensor range and $n_o = 4$, it would return the corresponding $(c_{x, j}, c_{y, j})$, $\theta_j$, $(a_j > 0$, $b_j > 0)$, and $f(j)=1$ for $j \in \{1, 2, 3\}$, and would return $(c_{x, j} = 0, c_{y, j} = 0)$, $\theta_j=0$, $(a_j = 1$ and $b_j = 1)$, and $f(j)=0$ for $j = 4$. 
 </p>
 
 <p>
@@ -698,7 +698,7 @@ The first three constraints i.e., for $j \in \{1, 2, 3\}$, would work as any oth
 </p>
 
 <p>
-<b>Note:</b>It should be noted that the above formulated constraints does not contain any information regarding the obstacles' velocities and accelerations. As the NMPC computes $N$ solutions, it <em>sees</em> these obstacles as stationary. It is only in the next iteration that the relative position of these obstacles are updated. So, in every iteration, only the first computed solution (out of $N$ control actions) is optimal because the obstacles' positions might evolve over the next $N-1$ computations. Since, the NMPC algorithm only utilises the first computed solution, the above method can still be used. Also, addressing this issue is beyond the scope of this article and is left to the curious as an exercise. 
+<b>Note:</b> It should be noted that the above formulated constraints does not contain any information regarding the obstacles' velocities and accelerations. As the NMPC computes $N$ solutions, it <em>sees</em> these obstacles as stationary. It is only in the next iteration that the relative position of these obstacles are updated. So, in every iteration, only the first computed solution (out of $N$ control actions) is optimal because the obstacles' positions might evolve over the next $N-1$ computations. Since, the NMPC algorithm only utilises the first computed solution, the above method can still be used. Also, addressing this issue is beyond the scope of this article and is left to the curious as an exercise. 
 </p>
 
 <p>
