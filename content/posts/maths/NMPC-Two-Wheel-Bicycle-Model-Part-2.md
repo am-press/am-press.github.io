@@ -16,7 +16,7 @@ collapsible: true
 <p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller.</p>
 
 <p>
-<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows here. The simulation code can be found at the following GitHub repository <b>(Insert link here)</b>.</p>
+<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows here. The simulation code can be found at the following GitHub repository ***Insert link here***.</p>
 
 ### Aim of this article:
 <p>The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. To that end, to keep things simple, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries.</p>
@@ -277,6 +277,88 @@ Let $p^\text{traj}_ {i_ p}$ be the <em>projection</em> of the current position o
 </p>
 
 <p><b>Note:</b> This approach for finding $i_ p$ is naive, in that the reference generator can be easily fooled to generate a reference position that is either too far ahead or (too far) behind the current vehicle position. In simple terms, this reference generator approach cannot guarantee the robustness of the NMPC controlled system for any arbitrary path. It is a good exercise for the reader to experiment and see why this is true. Addressing this issue is beyond the scope of this article and the reader is encouraged to do their own research.</p>
+
+<p>
+Due to the increased complexity, the implementation of this algorithm and the rest of the code is divided in to three classes in Python3 as follows,
+</p>
+
+<ol> 
+<li> <code>class BicycleModel:</code>
+    <ol type="a">
+        <li>Dependencies:</li>
+            <ul>
+                <li><code>NumPy:</code> For linear algebra and trigonometry.</li>
+                <li><code>CasADi:</code> For <code>OpEN</code> compatible trigonometric functions.</li>
+            </ul>
+        <li>Implements:</li>
+            <ul>
+                <li>Continuous and discrete time bicycle model dynamics using <code>NumPy</code>, as per [1].</li>
+                <li><code>OpEn</code> compatible discrete time bicycle model dynamics using <code>CasADi</code>, as per [1].</li>
+            </ul>
+        <!-- <li>Methods:</li>
+            <ol type="i">
+                <li><code>__init__:</code></li>
+                    <ul>
+                        <li>Argument <code>Ts:</code> Sampling time of discrete time bicycle model dynamics.</li>
+                        <li>Initialises required simulation variables of the bicycle model.</li>
+                    </ul>
+                <li><code>dynamics_generic_dt(z, u, lib=cs):</code></li>                
+                    <ul>
+                        <li>Argument <code>z:</code> Current state of the vehicle bicycle model.</li>
+                        <li>Argument <code>u:</code> Current input to the vehicle bicycle model.</li>
+                        <li>Argument <code>lib:</code> Module selection between <code>NumPy</code> and <code>CasADi</code> to use for next state somputation. Uses <code>CasADi</code> by default.</li>
+                        <li>Initialises required simulation variables of the bicycle model.</li>
+                    </ul>
+                <li><code>dynamics_generic_ct(z, u, lib=cs):</code></li>
+                <li><code>dynamics_cs(z, u):</code></li>
+            </ol> -->
+    </ol> 
+</li>
+
+<li> <code>class TrackGenerator:</code> 
+    <ol type="a">
+        <li>Dependencies:</li>
+            <ul>
+                <li><code>numpy:</code> For linear algebra and trigonometry.</li>
+                <li><code>matplotlib.patches.Ellipse:</code> For simulation graphics.</li>
+            </ul>
+        <li>Implements (<em>Spoiler Alert!!!</em>):</li>
+            <ul>
+                <li>Track generation for both simulation and visualisation purposes.</li> 
+                <li>For simulation, it generates elliptical tracks of required size and samples the track boundaries and centre in to desired number of samples.</li> 
+                <li>For track visualisation, it generates <code>matplotlib</code> elliptical patches.</li> 
+                <li>It is also used for generating elliptical obstacle boundaries (<em>safety circles</em>).</li>
+            </ul>
+    </ol> 
+</li>
+
+<li> <code>class ReferenceGenerator:</code> 
+    <ol type="a">
+        <li>Dependencies:</li>
+            <ul>
+                <li><code>numpy:</code> For linear algebra and trigonometry.</li>
+                <li><code>TrackGenerator:</code> For regenerating <em>safety circles</em> for moving obstacles every instant.</li>
+            </ul>
+        <li>Implements (<em>Spoiler Alert!!!</em>):</li>
+            <ul>
+                <li>The aforementioned reference generator algorithm.</li> 
+                <li>Ability to add obstacles to the track.</li>
+                <li>Ability to move obstacles on the track.</li>
+                <li>Ability to detect obstacles within the vehicle's virtual sensor range.</li>
+                <li>Extends the aforementioned reference generator algorithm to avoid generating reference close to obstacles.</li>
+            </ul>
+    </ol> 
+</li>
+
+</ol>
+
+<p>
+<b>Note:</b> From here on, the Python3 implementation code snippets for the simulation side of the code is not presented in order to avoid clumsy presentation. Instead the reader is requested to visit this ***insert github link*** GitHub repository.
+</p>
+
+<p>
+<b>Note:</b> The <code>TrackGenerator</code> and <code>ReferenceGenerator</code> class explanations contain obstacle avoidance related spoilers from upcoming sections. As the necessity of these features will become clear in the sections that follow, the reader is advised to just keep them in mind for the time being.
+</p>
 
 <p>
 
