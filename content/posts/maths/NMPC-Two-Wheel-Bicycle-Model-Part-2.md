@@ -16,7 +16,7 @@ collapsible: true
 <p>This post is the continuation of a previous post on <a href="../NMPC-Two-Wheel-Bicycle-Model" target="_blank">Nonlinear Model Predictive Control (NMPC) for autonomous navigation of small scale cars</a>, which served as an introduction to NMPC based autonomous navigation. The previous post also featured the addition of the vehicle's braking system along with its simulation results. The discussion ended with a note on the undesirable simultaneous use of the acceleration PWM input $(\tilde{d})$ and the brake input $(\tilde{b})$ by the controller.</p>
 
 <p>
-<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows here. The simulation code can be found at the following GitHub repository ***Insert link here***.</p>
+<b>Note:</b> It is recommended that the reader should first go through the previous post to help understand what follows here. The simulation code can be found at the following GitHub <a href=https://github.com/patchedByBatman/Autonomous_car_NMPC target="_blank">repository</a>.</p>
 
 ### Aim of this article:
 <p>The aim of this article is to demonstrate the abilities of an NMPC controlled vehicle to navigate around moving obstacles without exiting a predetermined track. To that end, to keep things simple, the predetermined track is selected to be a simple ellipse and the obstacles will be approximated to their respective elliptical boundaries.</p>
@@ -346,6 +346,7 @@ Due to the increased complexity, the implementation of this algorithm and the re
                 <li>Ability to move obstacles on the track.</li>
                 <li>Ability to detect obstacles within the vehicle's virtual sensor range.</li>
                 <li>Extends the aforementioned reference generator algorithm to avoid generating reference close to obstacles.</li>
+                <li>Extends the aforementioned reference generator algorithm to fixate the reference in the middle of two obstacles when two or more obstacles are detected.</li>
             </ul>
     </ol> 
 </li>
@@ -353,7 +354,7 @@ Due to the increased complexity, the implementation of this algorithm and the re
 </ol>
 
 <p>
-<b>Note:</b> From here on, the Python3 implementation code snippets for the simulation side of the code are not presented in order to avoid clumsy presentation. Instead the reader is requested to visit this ***insert github link*** GitHub repository.
+<b>Note:</b> From here on, the Python3 implementation code snippets for the simulation side of the code are not presented in order to avoid clumsy presentation. Instead the reader is requested to visit this GitHub <a href=https://github.com/patchedByBatman/Autonomous_car_NMPC target="_blank">repository</a>.
 </p>
 
 <p>
@@ -362,7 +363,7 @@ Due to the increased complexity, the implementation of this algorithm and the re
 
 <p>
 
-This algorithm is implemented in Python3 with a elliptical track of width $w = 1$ m. The major axis radius of the centre of the track is equal to $a = 5$ m and the corresponding minor axis radius is equal to $b = 4.5$ m. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z=[5, 0]^\mathsf{T}$ and the simulation results are shown in the GIF below.
+This algorithm is implemented in Python3 with an elliptical track of width $w = 1$ m. The major axis radius of the centre of the track is equal to $a = 5$ m and the corresponding minor axis radius is equal to $b = 4.5$ m. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z$ equal to zeroth index position of the centre lane samples, and the simulation results are shown in the GIF below.
 </p>
 
 <div>
@@ -425,7 +426,7 @@ This is not true lane-keeping but rather the first step towards it. True lane-ke
 2. Safety must take priority over reference tracking.
 </p>
 
-## ఠ Section 3: Lane-keeping + Obstacle Avoidance
+## Section 3: Lane-keeping + Obstacle Avoidance
 
 <p>
 
@@ -518,116 +519,58 @@ $$
 </p>
 
 <p>
-The above changes in the NMPC formulation can be realised in existing Python3 code as follows,
+For the Python3 code realisation of the above changes in the NMPC formulation please refer to <code>build_optimiser.py</code> file in this GitHub <a href=https://github.com/patchedByBatman/Autonomous_car_NMPC target="_blank">repository</a>.
 </p>
 
-```Python
-nz = 6
-nu = 3
-N = 50
+<p>
+Stating the simulation environment setup again, with an elliptical track of width $w = 1$ m, the major and minor axis radii of the centre of the track equal to $a = 5$ m and $b = 4.5$ m respectively. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. 
+</p>
 
-zmin = [-100, -100, -np.inf, 0, 0, -np.inf]
-zmax = [100, 100, np.inf, 5, 5, np.inf]
-umin_seq = [0, -np.pi/3, 0] * N
-umax_seq = [1, np.pi/3, 1] * N
+<p>
+In addition to lane keeping, four elliptical obstacles were added to the track. For this two <em>virtual</em> lanes sampled at $s_ p = 40$ samples per metre have been constructed between the track centre lane and outer edge, and track centre lane and inner edge respectively. The sole purpose of these lanes is to fix the centres of the obstacles on these lanes, at different positions choosen around the track. The environment has been set up so that the major axis of these elliptical obstacles always lie tangential to their respective <em>virtual</em> lanes. Two obstacles were added on the outer lane at (outer lane sampled) index positions $400$ and $1050$ respectively. The other two were added on the inner lane at (inner lane sampled) index positions $100$ and $800$ respectively. 
+</p>
 
-Q1 = np.diagflat([10000, 10000, 0, 0, 0, 0])
-Q2 = np.diagflat([10, 10, 10])
-R = 1000000
-
-u_seq = cs.SX.sym("u_seq", N * nu, 1)
-problem_params = cs.SX.sym("problem_params", 2*nz + 2*nu, 1)
-z_0 = problem_params[ : nz]
-z_ref = problem_params[nz : 2 * nz]
-u_ref = problem_params[2 * nz : 2 * nz + nu]  # currently un-used
-u_prev = problem_params[2 * nz + nu : 2 * nz + 2 * nu]  # u_{-1} value of inputs before t=0
-obstacles_functions = []
-obstacle_params = [0]*num_simultaneous_obstacles_to_track
-def obstacle_function(x, y, obstacle_param):
-    X_ = (x - obstacle_param[0])
-    Y_ = (y - obstacle_param[1])
-    a = obstacle_param[2]
-    b = obstacle_param[3]
-    theta = 2*cs.pi - obstacle_param[4]
-    is_present = obstacle_param[5]
-
-    X = (X_ * cs.cos(theta) - Y_ * cs.sin(theta)) / a
-    Y = (X_ * cs.sin(theta) + Y_ * cs.cos(theta)) / b
-
-    return cs.fmax(0, is_present - X ** 2 - Y ** 2)
-
-for i in range(num_simultaneous_obstacles_to_track):
-    obstacle_params[i] = problem_params[2*(nz + nu) + num_data_params_per_obstacle*i:2*(nz + nu) + num_data_params_per_obstacle*(i+1)]
-    obstacles_functions.append(partial(obstacle_function, obstacle_param=obstacle_params[i]))
-
-z_t = z_0
-
-def stage_cost(u_current, u_prev):
-    return (u_current.T - u_prev.T) @ R @ (u_current - u_prev) + R * u_current[0] * u_current[2]
-
-def terminal_cost(z):
-    return (z.T - z_ref.T) @ Q @ (z - z_ref)
-
-total_cost = 0
-penality_constraint_position = 0
-penality_constraint_obstacles = 0
-penality_constraint_tracks = 0
-penality_constraint_vx = 0
-penality_constraint_vy = 0
-
-for t in range(N):
-    u_current = u_seq[t * nu : (t + 1) * nu]
-    total_cost += stage_cost(u_current, u_prev)
-    z_t = bm.dynamics_cs(z_t, u_current)
-    u_prev = u_current
-    penality_constraint_position += cs.fmax(0, (2 + bm.car_width / 2)**2 - z_t[0]**2 - z_t[1]**2)
-    penality_constraint_vx += cs.fmax(0, cs.norm_1(z_t[3]) - zmax[3])
-    penality_constraint_vx += cs.norm_1(cs.fmin(zmin[3], z_t[3]))
-    for obstacle_function in obstacles_functions:
-        penality_constraint_obstacles += obstacle_function(z_t[0], z_t[1])
-    penality_constraint_tracks += cs.fmax(0, 1 - (z_t[0]/(5 + .25))**2 - (z_t[1]/(4+.25))**2)
-    penality_constraint_tracks += cs.fmax(0, (z_t[0]/(6-.25))**2 + (z_t[1]/(5-.25))**2 - 1)
-
-
-total_cost += terminal_cost(z_t)
-
-U = og.constraints.Rectangle(umin_seq, umax_seq)
-
-problem = og.builder.Problem(u_seq, problem_params, total_cost)
-problem = problem.with_constraints(U)
-problem = problem.with_penalty_constraints(penality_constraint_position 
-                                           + penality_constraint_vx + penality_constraint_vy 
-                                           + penality_constraint_obstacles + penality_constraint_tracks)
-
-build_config = og.config.BuildConfiguration() \
-    .with_build_directory("optimizer") \
-    .with_tcp_interface_config()
-
-meta = og.config.OptimizerMeta().with_optimizer_name("bicycle_model")
-
-solver_config = og.config.SolverConfiguration()\
-    .with_tolerance(1e-4)\
-    .with_penalty_weight_update_factor(3)
-
-builder = []
-builder = og.builder.OpEnOptimizerBuilder(problem, meta,
-                                          build_config, solver_config).with_verbosity_level(0)
-
-builder.build()
-```
+<p>
+The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z$ equal to zeroth index position of the centre lane samples. The corresponding simulation results are shown in the GIF below.
+</p>
 
 <div>
 <img src="/track_drive_multiple_obs_no_disappear.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
 </div>
 
+<p>
+As it can be seen from the GIF above, the vehicle sucessfully navigates around the obstacles without exiting the track. Evenmore, the NMPC controller manages to squeeze the vehicle between two closely placed obstacles without colliding. 
+</p>
+
 ## Section 4: Virtual sensor
+
+<p>
+Before proceeding to moving obstacles and <b>DOSA</b>, it is necessary to introduce the concept of a virtual sensor. To simulate a relatively realistic driving environemt, the NMPC controller needs to be made oblivious to obstacles present at distances far away from the vehicle. For such, we need to set a <em>range</em> of distance from the vehicle, after which the NMPC controller will not receive obstacle information.
+</p>
+
+<p>
+For this, the concept of a virtual sensor is introduced. The virtual sensor is an obstacle sensor, that gives the obstacle details in terms of its safety-circle's centre, orientation and radii. The NMPC controller is only made aware of these obstacle parameters once they appear with in the range of the virtual sensor. This means that the NMPC controller has to dynamically adjust the control actions for the obstacles as they appear (similar to humans). 
+</p>
+
+<p>
+For simplicity, the range of the virtual sensor is set from the projection of the vehicle's centre of gravity on the centre lane (white dot) to the reference point (red dot). For visualisation purposes, the obstacles outside the virtual sensor's range will be turned invisible. An example of this virtual sensor in action is shown in the GIF below.
+</p>
+
 <div>
 <img src="/track_drive_multiple_obs_disappear.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
 </div>
 
+<p>
+<b>NOTE:</b> The implementation details of the virtual sensor requires the introduction of the special function. For this please continue to read Section 5, where the necessary implementation details have been provided.
+</p>
+
+<p>
+As it can be seen, from the GIF above, that the vehicle still manages to navigate through the obstacles.
+</p>
+
 ## Section 5: DOSA (very healthy if prepared right)
 
-<p>In particular we are interested in a formulation the guarantees Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>) with objects in motion. To explain this, let us consider the following scenario,
+<p>So far, we have looked at the vehicle navigating through static obstacles, the goal of this section and in turn the end goal of this article is to make the NMPC controlled vehicle navigate around moving obstacles. For this, we want to alter the formulation of the NMPC to enable such a feature. In particular, we are interested in a formulation the guarantees Dynamic Obstacle Switching and Avoidance (<b>DOSA</b>) with objects in motion. To explain this, let us consider the following scenario.
 </p>
 
 <p>
@@ -635,7 +578,7 @@ Imagine yourself driving a car on a typical high-way/ motor-way. At a basic leve
 </p>
 
 <p>
-Given that there are objects (stationary or moving) and vehicles (stationary or moving) with possibly different velocities than your's, the relative position of these vehicles and objects with you change over time. This also implies that objects and vehicles <em>come and go</em> into your vicinity. Say, as vehicle-a goes out of your vicinity some vehicle-b comes by, there is no point in tracking vehicle-a anymore and there is a need for tracking the newly arrived vehicle-b. This raises the necessity of dynamically dropping old objects of interest, the ones that are gone by, and track new objects of interest, the ones that have newly arrived into your vicinity. This <em>dynamic switching</em> between objects (<em>obstacles</em>) and actively avoiding them is <b>DOSA</b>. 
+Given that there are objects (stationary or moving) and vehicles (stationary or moving) with possibly different velocities than your's, the relative position of these vehicles and objects with you change over time. This also implies that objects and vehicles <em>come and go</em> into your vicinity. Say, as vehicle-A goes out of your vicinity some vehicle-B comes by, there is no point in tracking vehicle-A anymore and there is a need for tracking the newly arrived vehicle-B. This raises the necessity of dynamically dropping old objects of interest, the ones that are gone by, and track new objects of interest, the ones that have newly arrived into your vicinity. This <em>dynamic switching</em> between objects (<em>obstacles</em>) and actively avoiding them is <b>DOSA</b> (Dynamic Obstacle Switching and Avoidance). 
 </p>
 
 <p>
@@ -648,7 +591,7 @@ In general, an autonomous car would be equipped with sensors to help with object
 4. What about the numerical stability in all these cases?
 
 <p>
-Before answering these questions, let us introduce the special reformulation as, 
+Before answering these questions, let us introduce a special reformulation of the generalised obstacle avoidance constraints as, 
 </p>
 
 <p>
@@ -668,7 +611,7 @@ Where, $(p_{x, k}, p_{y, k})$ is the position of the vehicle's centre at $k^\tex
 </p>
 
 <p>
-<b>Note:</b> The reader should take a note of the emphasis on the word constraint in obstacle constraint above. The formulation is not an expression in reference to any particular obstacle, but is a generic constraint, which will be a part of the optimisation problem formulation. Meaning, the obstacle constraint parameters mentioned above are not fixed constants related to an obstacle (say vehicle-a), but will be changing dynamically as the algorithm does <b>DOSA</b>. For example, when vehicle-a goes away as vehicle-b comes by, the parameters of the $j^\text{th}$ obstacle constraint will be switching from constants that describe the centre, orientation and radii of vehicle-a to the corresponding constants that describe vehicle-b. This is in contrast to what was done in Section 3, where the obstacles are static, and their positions, shapes and orientations are know (fixed) beforehand. 
+<b>Note:</b> The reader should take a note of the emphasis on the word constraint in obstacle constraint above. The formulation is not an expression in reference to any particular obstacle, but is a generic constraint, which will be a part of the optimisation problem formulation. Meaning, the obstacle constraint parameters mentioned above are not fixed constants related to an obstacle (say vehicle-A), but will be changing dynamically as the algorithm does <b>DOSA</b>. For example, when vehicle-A goes away as vehicle-B comes by, the parameters of the $j^\text{th}$ obstacle constraint will be switching from constants that describe the centre, orientation and radii of vehicle-A to the corresponding constants that describe vehicle-B. This is in contrast to what was done in Section 3, where the obstacles are static, and their positions, shapes and orientations are know (fixed) beforehand. 
 </p>
 
 <p>
@@ -705,9 +648,27 @@ The first three constraints i.e., for $j \in \{1, 2, 3\}$, would work as any oth
 Addressing the questions posed before, although the above formulation guarantees <em>safety</em> with regards to collision prevention through obstacle avoidance, it is difficult to extend this <em>safety</em> for all possible relative velocities between the vehicle and the obstacles. In this regard, questions $1$ and $4$ require a more complex formulation and for the sake keeping things simple, they will remain unanswered. But, some form of numerical stability is still maintained because of the introduction of the special function. As for the questions $2$ and $3$, by the virtue of DOSA and the special function, the formulation gets some flexibility in terms of tackling an undisclosed number of obstacles, provided that the path is not completely blocked.
 </p>
 
-<p>With these changes we rewrite parts of our python code as follows, ***Insert Python3 code***</p>
+<p>With these changes, the NMPC controlled vechile is simulated to drive on an elliptical track of width $w = 1$ m, and the major and minor axis radii of the centre of the track equal to $a = 5$ m and $b = 4.5$ m respectively. The track centre lane is sampled at a constant rate of $s_ p = 40$ samples per metre and the number of points to look ahead is set to $l = 120$ samples. 
+</p>
 
-<p>Below are the simulation results ***provide simulation configuration***</p>
+<p>
+This time the four elliptical obstacles added to the track were programmed to move around the track in counter-clockwise direction at an approximately constant speed of $2$ m/s. The two <em>virtual</em> lanes sampled at $s_ p = 40$ samples per metre between the track centre lane and outer edge, and track centre lane and inner edge respectively remain the same. Again stating, the sole purpose of these lanes is to fix the centres of the obstacles on these lanes, at different positions choosen around the track. 
+</p>
+
+<p>The environment has been set up so that the major axis of these elliptical obstacles always lie tangential to their respective <em>virtual</em> lanes. Two obstacles were added on the outer lane at (outer lane sampled) index positions $315$ and $945$ respectively. The other two were added on the inner lane at (inner lane sampled) index positions $315$ and $945$ respectively. 
+</p>
+
+<p>
+The system is simulated with $N=50$, $S=1500$, $T=0.01$ s, and $z$ equal to zeroth index position of the centre lane samples. The corresponding simulation results are shown in the GIF below.
+</p>
+
+<div>
+<img src="/NMPC_moving_obstacles.gif" alt="Simulation results: track sampling = 40 samples/m and 200 samples look ahead" width="640" height="400">
+</div>
+
+<p>
+As it can be seen from the above GIF, the NMPC controlled vehicle successfully navigates around multiple moving obstacles. Moreover, between $5$ and $15$ seconds, the vehicel seems to perform a safe vechicle takeover whilst being sandwitched by two vehicles.
+</p>
 
 ## References
 <p>
