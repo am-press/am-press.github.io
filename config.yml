@@ -1,6 +1,6 @@
 baseURL: "https://am-press.github.io/"
 title: AMP
-paginate: 10
+pagination.pagerSize: 10
 theme: hugo-PaperMod
 
 enableInlineShortcodes: true
