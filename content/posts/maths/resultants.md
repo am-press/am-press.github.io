@@ -23,9 +23,9 @@ collapsible: true
 
 ## 1. Definition
 
-<p>Here we work with polynomials<sup>[<a href="#references">1</a>]</sup> over a field $F$, $f\in F[x]$, which are of the general form</p> 
+<p>Here we work with polynomials<sup>[<a href="#references">1</a>]</sup> over an algebraically closed field $F$, $f\in F[x]$, which are of the general form</p> 
 <p>$$f(x) = \prod_{i=0}^{n}(x-\alpha_i) = a_0 + a_1x + \ldots + a_n x^n,$$</p>
-<p>with $a_n\neq 0$ and $a_i\in F$.</p>
+<p>with $a_n\neq 0$ and $a_i\in F$. This factorisation requires $F$ to be algebraically closed.</p>
 
 <div style="border-style:dashed;border-width:1.5px;padding: 10px 15px 0px 10px; margin-bottom: 10px" id="problem_statement">
     <p><strong>Problem statement.</strong> 
