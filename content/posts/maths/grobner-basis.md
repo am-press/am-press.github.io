@@ -13,13 +13,13 @@ collapsible: true
 
 **Read first:** <a href="../hilbert-basis-theorem">Hilbert's basis theorem</a>
 
-In this post we define the notion of a Gröbner basis of a polynomial ideal, which is an ideal basis possessing favourable properties related to multivariate polynomial division. It is a notion of central importance in algebraic geometry. Good reading material is this book[^1] and this thesis[^2].
+In this post we define the notion of a Gröbner basis of a polynomial ideal, which is an ideal basis possessing favourable properties related to multivariate polynomial division. It is a notion of central importance in algebraic geometry. Good reading material is this book[^1] and this thesis[^2]. 
 
 ## Gröbner bases
 
 ### Definitions
 
-A Gröbner basis is a "good" basis of a <a href="../ideal-generated-by-polynomials">polynomial ideal</a> and it helps give a solution to the <span id="imp">ideal membership problem</span>, which is stated as follows:
+A Gröbner basis is a "good" basis of a <a href="../ideal-generated-by-polynomials">polynomial ideal</a> and it helps give a solution to the <span id="imp">ideal membership problem</span>, which is stated as follows: 
 
 > **Ideal membership problem:**
 > Given an ideal $I$ and a polynomial $f$, we need to tell whether $f\in I$ (in a computationally tractable manner).
@@ -96,7 +96,7 @@ lt_gi  = {...
     To generalise the situation of the previous exercise, suppose $I=\langle f_1, \ldots, f_s\rangle$ is an ideal such that</p> 
     <p>$$\langle \mathrm{lt}(f_1), \ldots, \mathrm{lt}(f_s)\rangle \subsetneq \langle \mathrm{lt}(I)\rangle.$$</p>
     <p>Prove that there is some $f \in I$ whose remainder on division by $f_1,\ldots, f_s$ is nonzero.</p>
-</div>
+</div> 
 
 <p><em>Solution.</em> There is an $f\in I$ such that 
 $$\mathrm{lt}(f) \notin \langle \mathrm{lt}(f_1), \ldots, \mathrm{lt}(f_s)\rangle,$$
